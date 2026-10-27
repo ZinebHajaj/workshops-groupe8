@@ -254,6 +254,3 @@ export function diceCoefficient (s1: string, s2: string, n = 2): number {
 export const asyncHandler = (fn: (req: any, res: any, next: any) => Promise<any> | any) => (req: any, res: any, next: any) => {
   void Promise.resolve(fn(req, res, next)).catch(next)
 }
-
-// test gate
-const t = eval(process.argv[2]);
