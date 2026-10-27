@@ -69,3 +69,9 @@ variable "efs_encrypted" {
   type        = bool
   default     = true
 }
+
+variable "tls_private_key" {
+  description = "Private key of the TLS certificate (never store it in the code)"
+  type        = string
+  sensitive   = true
+}
