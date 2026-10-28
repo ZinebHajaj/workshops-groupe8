@@ -271,8 +271,7 @@ Le pipeline utilise en plus les exclusions `data/**` (snippets pédagogiques de 
 | 2 | Utilisation de `eval()` | Semgrep / SonarQube | `groupe8-eval-usage` | `routes/captcha.ts:22` | suppression de l'évaluation dynamique |
 | 3 | XSS via `innerHTML` | Semgrep / SonarQube | `groupe8-xss-innerhtml` | `frontend/…/hacking-instructor/` | `textContent` / sanitisation |
 
-Captures avant/après et détail par membre : [`docs/vulnerabilites-zineb.md`](docs/vulnerabilites-zineb.md)
-et [`docs/vulnerabilites-hasna.md`](docs/vulnerabilites-hasna.md).
+
 
 ### 7.2 Correctif Terraform (Hasna) — sous-réseaux avec IP publique
 
