@@ -1,0 +1,154 @@
+# =============================================================================
+# Regles Semgrep "maison" - Workshop 2 - Groupe 8
+# Complement aux regles de la communaute (p/default, p/owasp-top-ten, p/secrets)
+# Objectif : cibler les patterns qui ont un sens pour Juice Shop / Node.js
+# =============================================================================
+rules:
+  # ---------------------------------------------------------------- Injection SQL
+  - id: groupe8-sql-injection-concat
+    languages: [javascript, typescript]
+    severity: ERROR
+    message: >
+      Requete SQL construite par concatenation de chaines : risque d'injection SQL.
+      Utilisez des requetes parametrees (placeholders ?) ou un ORM.
+    metadata:
+      category: security
+      cwe: ["CWE-89: Improper Neutralization of Special Characters used in SQL Commands"]
+      owasp: "A03:2021 - Injection"
+    patterns:
+      - pattern-either:
+          - pattern: |
+              $DB.query($A + $B, ...)
+          - pattern: |
+              $DB.query(`...${...}...`, ...)
+          - pattern: |
+              $DB.run($A + $B, ...)
+          - pattern: |
+              $DB.get($A + $B, ...)
+          - pattern: |
+              $DB.all($A + $B, ...)
+
+  # ------------------------------------------------------------ XSS / innerHTML
+  - id: groupe8-xss-innerhtml
+    languages: [javascript, typescript]
+    severity: ERROR
+    message: >
+      Affectation directe a innerHTML (ou outerHTML) : risque de XSS.
+      Utilisez textContent ou un mecanisme d'echappement/sanitisation.
+    metadata:
+      category: security
+      cwe: ["CWE-79: Improper Neutralization of Input During Web Page Generation"]
+      owasp: "A03:2021 - Injection"
+    patterns:
+      - pattern-either:
+          - pattern: $EL.innerHTML = $INPUT
+          - pattern: $EL.outerHTML = $INPUT
+
+  # ------------------------------------------------- Eval / execution dynamique
+  - id: groupe8-eval-usage
+    languages: [javascript, typescript]
+    severity: ERROR
+    message: >
+      Utilisation de eval() / new Function() : execution de code arbitraire.
+      Remplacez par une logique explicite (mapping, JSON.parse, etc.).
+    metadata:
+      category: security
+      cwe: ["CWE-95: Improper Neutralization of Directives in Dynamically Evaluated Code"]
+      owasp: "A03:2021 - Injection"
+    patterns:
+      - pattern-either:
+          - pattern: eval(...)
+          - pattern: new Function(...)
+          - pattern: setTimeout($STR, ...)
+          - pattern: setInterval($STR, ...)
+    # On ignore les tests
+    paths:
+      exclude:
+        - "test/**"
+        - "**/*.spec.ts"
+
+  # --------------------------------------------------- Secrets en dur
+  - id: groupe8-hardcoded-secret
+    languages: [javascript, typescript, yaml, json]
+    severity: ERROR
+    message: >
+      Secret (mot de passe, cle API, token) ecrit en dur dans le code.
+      Deplacez-le dans une variable d'environnement ou un gestionnaire de secrets.
+    metadata:
+      category: security
+      cwe: ["CWE-798: Use of Hard-coded Credentials"]
+      owasp: "A07:2021 - Identification and Authentication Failures"
+    patterns:
+      - pattern-regex: "(?i)(password|passwd|secret|api[_-]?key|private[_-]?key|token)\\s*[:=]\\s*['\"][^'\"\\s]{8,}['\"]"
+    paths:
+      exclude:
+        - "test/**"
+        - "**/*.spec.ts"
+        - "data/**"
+        - "i18n/**"
+        - "docs/**"
+        - ".github/**"
+        - "config/**"
+
+  # --------------------------------------- Verification TLS desactivee
+  - id: groupe8-tls-verification-disabled
+    languages: [javascript, typescript]
+    severity: WARNING
+    message: >
+      La verification des certificats TLS est desactivee : vulnerabilite MITM.
+      Supprimez rejectUnauthorized:false / NODE_TLS_REJECT_UNAUTHORIZED=0.
+    metadata:
+      category: security
+      cwe: ["CWE-295: Improper Certificate Validation"]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              {..., rejectUnauthorized: false, ...}
+          - pattern: process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0"
+
+  # ------------------------------------------------ Chiffrement faible
+  - id: groupe8-weak-hash
+    languages: [javascript, typescript]
+    severity: ERROR
+    message: >
+      Algorithme de hachage faible (MD5/SHA1) utilise pour des mots de passe.
+      Utilisez bcrypt / argon2 / scrypt.
+    metadata:
+      category: security
+      cwe: ["CWE-327: Use of a Broken or Risky Cryptographic Algorithm"]
+    patterns:
+      - pattern-either:
+          - pattern: crypto.createHash("md5")
+          - pattern: crypto.createHash("sha1")
+
+  # --------------------------------------------- Open redirect / redirection
+  - id: groupe8-open-redirect
+    languages: [javascript, typescript]
+    severity: WARNING
+    message: >
+      Redirection vers une URL provenant de la requete sans validation : open redirect.
+      Validez la cible contre une liste blanche.
+    metadata:
+      category: security
+      cwe: ["CWE-601: URL Redirection to Untrusted Site"]
+    patterns:
+      - pattern-either:
+          - pattern: $RES.redirect($REQ.query.$X)
+          - pattern: $RES.redirect($REQ.params.$X)
+
+  # -------------------------------------------- Command injection (child_process)
+  - id: groupe8-command-injection
+    languages: [javascript, typescript]
+    severity: ERROR
+    message: >
+      Execution de commande systeme avec une entree non validee : injection de commandes.
+      Utilisez execFile/spawn avec des arguments separes et une liste blanche.
+    metadata:
+      category: security
+      cwe: ["CWE-78: Improper Neutralization of Special Elements used in an OS Command"]
+      owasp: "A03:2021 - Injection"
+    patterns:
+      - pattern-either:
+          - pattern: child_process.exec(`...${...}...`)
+          - pattern: exec($A + $B, ...)
+          - pattern: execSync(`...${...}...`)

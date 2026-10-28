@@ -1,0 +1,278 @@
+# =============================================================================
+# Workshop 2 - SAST (SonarQube + Semgrep)
+# Pipeline CI/CD : checkout -> SonarQube -> Semgrep -> Security Gate
+# Auteur : Ouzziki Lhoussaine - Groupe 8
+# =============================================================================
+name: Workshop 2 - SAST Pipeline (SonarQube + Semgrep)
+
+on:
+  push:
+    branches:
+      - main
+      - workshop2
+      - "workshop2-**"
+      - "feat/**"
+  pull_request:
+    branches:
+      - main
+      - workshop2
+  workflow_dispatch: {} # permet de lancer le pipeline a la main depuis l'onglet Actions
+
+# Droits minimaux necessaires (bonne pratique securite = principe du moindre privilege)
+permissions:
+  contents: read
+  security-events: write # pour publier le rapport SARIF dans l'onglet "Code scanning"
+  pull-requests: write # pour commenter/annoter la PR
+  actions: read
+
+env:
+  SONAR_PROJECT_KEY: workshops-groupe8-juice-shop
+  SONAR_HOST_URL_LOCAL: http://localhost:9000
+  SQ_IMAGE: sonarqube:lts-community
+  NODE_VERSION: "22"
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # JOB 1 - SonarQube : demarrage du serveur en Docker, scan, quality gate
+  # ---------------------------------------------------------------------------
+  sonarqube:
+    name: SonarQube - scan + quality gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: "1. Checkout du code"
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # historique complet = necessaire pour le "new code" de SonarQube
+
+      - name: "2. Preparer l'hote pour SonarQube (Elasticsearch)"
+        run: |
+          # SonarQube embarque Elasticsearch : il exige un vm.max_map_count eleve
+          # et des limites de fichiers ouvertes importantes.
+          sudo sysctl -w vm.max_map_count=524288
+          sudo sysctl -w fs.file-max=131072
+          ulimit -n 131072 || true
+          docker --version
+
+      - name: "3. Demarrer SonarQube (Docker) et attendre qu'il soit UP"
+        run: |
+          docker run -d --name sonarqube \
+            -p 9000:9000 \
+            -e SONAR_ES_BOOTSTRAP_CHECKS_DISABLE=true \
+            "$SQ_IMAGE"
+
+          echo "Attente du demarrage de SonarQube (peut prendre 1-3 minutes)..."
+          for i in $(seq 1 90); do
+            STATUS=$(curl -s "$SONAR_HOST_URL_LOCAL/api/system/status" | jq -r '.status // "DOWN"' 2>/dev/null || echo "DOWN")
+            echo "  [$i] status = $STATUS"
+            if [ "$STATUS" = "UP" ]; then
+              echo "SonarQube est pret."
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "::error::SonarQube n'a pas demarre dans le temps imparti."
+          docker logs --tail 100 sonarqube
+          exit 1
+
+      - name: "4. Generer le token d'analyse (admin par defaut)"
+        id: sq-token
+        run: |
+          # Premier demarrage : identifiants par defaut admin / admin.
+          # SonarQube impose de changer le mot de passe avant de creer un token.
+          NEWPASS='Workshop2-CI-Passw0rd!'
+          curl -s -f -u admin:admin -X POST "$SONAR_HOST_URL_LOCAL/api/users/change_password" \
+            --data-urlencode "login=admin" \
+            --data-urlencode "previousPassword=admin" \
+            --data-urlencode "password=$NEWPASS" > /dev/null
+
+          TOKEN=$(curl -s -f -u "admin:$NEWPASS" -X POST \
+            "$SONAR_HOST_URL_LOCAL/api/user_tokens/generate" \
+            --data-urlencode "name=gh-actions-${{ github.run_id }}" \
+            | jq -r '.token')
+
+          if [ -z "$TOKEN" ] || [ "$TOKEN" = "null" ]; then
+            echo "::error::Impossible de generer un token SonarQube."
+            exit 1
+          fi
+          echo "::add-mask::$TOKEN"
+          echo "token=$TOKEN" >> "$GITHUB_OUTPUT"
+
+      - name: "5. Analyse SonarQube (sonar-scanner)"
+        uses: SonarSource/sonarqube-scan-action@v5
+        env:
+          SONAR_HOST_URL: ${{ env.SONAR_HOST_URL_LOCAL }}
+          SONAR_TOKEN: ${{ steps.sq-token.outputs.token }}
+
+      - name: "6. Quality Gate SonarQube"
+        id: gate
+        continue-on-error: true # on ne casse pas le job ici : le job "security-gate" decide
+        uses: SonarSource/sonarqube-quality-gate-action@v1
+        timeout-minutes: 10
+        env:
+          SONAR_HOST_URL: ${{ env.SONAR_HOST_URL_LOCAL }}
+          SONAR_TOKEN: ${{ steps.sq-token.outputs.token }}
+
+      - name: "7. Sauvegarder le statut du Quality Gate"
+        if: always()
+        run: |
+          echo "${{ steps.gate.outcome }}" > sonar-quality-gate.txt
+          echo "Resultat quality gate : ${{ steps.gate.outcome }}"
+          cat sonar-quality-gate.txt
+
+      - name: "8. Logs SonarQube en cas d'echec"
+        if: failure()
+        run: docker logs --tail 200 sonarqube
+
+      - name: "9. Upload des artefacts SonarQube"
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sonarqube-artifacts
+          path: |
+            sonar-quality-gate.txt
+            .scannerwork/report-task.txt
+            .scannerwork/*.json
+          if-no-files-found: ignore
+          retention-days: 14
+
+  # ---------------------------------------------------------------------------
+  # JOB 2 - Semgrep : analyse statique fine (patterns de securite)
+  # ---------------------------------------------------------------------------
+  semgrep:
+    name: Semgrep - analyse statique
+    runs-on: ubuntu-latest
+    container:
+      image: semgrep/semgrep:latest
+    timeout-minutes: 30
+
+    steps:
+      - name: "1. Checkout du code"
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: "2. Determiner la baseline (uniquement les nouvelles findings)"
+        id: baseline
+        run: |
+          BASE=""
+          # Sur un push : on compare avec le commit precedent.
+          if [ "${{ github.event_name }}" = "push" ] && [ -n "${{ github.event.before }}" ] \
+             && [ "${{ github.event.before }}" != "0000000000000000000000000000000000000000" ]; then
+            BASE="${{ github.event.before }}"
+          fi
+          # Sur une PR : on compare avec la branche de destination.
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE="${{ github.event.pull_request.base.sha }}"
+          fi
+          echo "baseline=$BASE" >> "$GITHUB_OUTPUT"
+          echo "Baseline Semgrep : ${BASE:-aucune (scan complet)}"
+
+      - name: "3. Scan Semgrep (regles communaute + regles maison)"
+        run: |
+          BASE="${{ steps.baseline.outputs.baseline }}"
+          BASELINE_ARGS=""
+          if [ -n "$BASE" ] && git cat-file -e "$BASE^{commit}" 2>/dev/null; then
+            BASELINE_ARGS="--baseline-commit $BASE"
+          fi
+
+          semgrep scan \
+            --config=p/default \
+            --config=p/owasp-top-ten \
+            --config=p/secrets \
+            --config=.semgrep.yml \
+            --sarif \
+            --output=semgrep.sarif \
+            --metrics=off \
+            --verbose \
+            $BASELINE_ARGS \
+            . || true # on laisse le security gate decider (code de sortie ignore ici)
+
+      - name: "4. Resume des resultats Semgrep"
+        if: always()
+        run: |
+          if [ ! -f semgrep.sarif ]; then
+            echo "::warning::Aucun fichier semgrep.sarif genere."
+            exit 0
+          fi
+          TOTAL=$(jq '[.runs[].results[]?] | length' semgrep.sarif)
+          ERRORS=$(jq '[.runs[].results[]? | select(.level=="error")] | length' semgrep.sarif)
+          WARNINGS=$(jq '[.runs[].results[]? | select(.level=="warning")] | length' semgrep.sarif)
+          {
+            echo "## Semgrep - resultats"
+            echo ""
+            echo "| Severite | Nombre |"
+            echo "|---|---|"
+            echo "| ERROR (bloquant) | $ERRORS |"
+            echo "| WARNING | $WARNINGS |"
+            echo "| **Total** | **$TOTAL** |"
+            echo ""
+            echo "### Top regles declenchees"
+            echo ""
+            echo "| Regle | Severite | Occurrences |"
+            echo "|---|---|---|"
+            jq -r '[.runs[].results[]?]
+                   | group_by(.ruleId)
+                   | map({rule: .[0].ruleId, sev: (.[0].level // "warning"), n: length})
+                   | sort_by(-.n) | .[:15][]
+                   | "| \(.rule) | \(.sev) | \(.n) |"' semgrep.sarif
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: "5. Publier le SARIF dans GitHub Code Scanning"
+        if: always()
+        continue-on-error: true # echoue sur les forks sans droits d'ecriture : non bloquant
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: semgrep.sarif
+          category: semgrep
+
+      - name: "6. Upload de l'artefact Semgrep"
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: semgrep-sarif
+          path: semgrep.sarif
+          if-no-files-found: ignore
+          retention-days: 14
+
+  # ---------------------------------------------------------------------------
+  # JOB 3 - Security Gate : decision finale (bloque la PR si seuils depasses)
+  # ---------------------------------------------------------------------------
+  security-gate:
+    name: Security Gate - decision
+    runs-on: ubuntu-latest
+    needs: [semgrep, sonarqube]
+    if: always()
+
+    steps:
+      - name: "1. Checkout du code"
+        uses: actions/checkout@v4
+
+      - name: "2. Recuperer les rapports"
+        uses: actions/download-artifact@v4
+        with:
+          path: reports
+          merge-multiple: true
+
+      - name: "3. Evaluer le gate de securite"
+        env:
+          MAX_SEMGREP_ERRORS: "0" # 0 nouvelle finding ERROR toleree
+          FAIL_ON_SONAR_GATE: "true" # mettre "false" pour un 1er scan de reference
+        run: |
+          chmod +x scripts/security-gate.sh
+          ./scripts/security-gate.sh reports/semgrep.sarif reports/sonar-quality-gate.txt
+
+      - name: "4. Resume du gate"
+        if: always()
+        run: |
+          {
+            echo "## Security Gate"
+            echo ""
+            echo "- Semgrep : \`${{ needs.semgrep.result }}\`"
+            echo "- SonarQube : \`${{ needs.sonarqube.result }}\`"
+            echo "- Decision : voir le log de l'etape precedente."
+            echo ""
+            echo "Le pipeline est **bloque** si une nouvelle vulnerabilite de severite ERROR"
+            echo "est detectee par Semgrep, ou si le Quality Gate SonarQube echoue."
+          } >> "$GITHUB_STEP_SUMMARY"
