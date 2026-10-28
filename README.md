@@ -109,9 +109,9 @@ aussi par localisation : une même ligne signalée par deux règles ne compte qu
 Trois jobs, exécutés en parallèle puis agrégés : `SonarQube - scan + quality gate`,
 `Semgrep - analyse statique` et `Security Gate - decision`.
 
-![Pipeline vert — les 3 jobs réussissent](docs/ci/01-pipeline-vert.png)
+![Pipeline vert — les 3 jobs réussissent](docs/screenshots/01-pipeline-vert.png)
 
-![Détail des jobs et durées (SonarQube 1 m 36 s, Semgrep 1 m 13 s, gate 10 s)](docs/ci/02-jobs-detail.png)
+![Détail des jobs et durées (SonarQube 1 m 36 s, Semgrep 1 m 13 s, gate 10 s)](docs/screenshots/02-jobs-detail.png)
 
 Les durées illustrent le compromis des deux outils : SonarQube paie le démarrage de son serveur
 (≈ 50 s pour télécharger et lancer l'image, puis l'indexation), alors que Semgrep analyse tout le
@@ -119,7 +119,7 @@ dépôt en un peu plus d'une minute, sans infrastructure.
 
 ### 4.2 SonarQube démarre bien dans le runner
 
-![Démarrage de SonarQube — status UP puis « SonarQube est prêt. »](docs/06-sonarqube-log.png)
+![Démarrage de SonarQube — status UP puis « SonarQube est prêt. »](docs/screenshots/06-sonarqube-log.png)
 
 Le workflow attend explicitement `status = UP` sur `/api/system/status` avant de lancer le scan
 (boucle de 90 × 5 s) : c'est ce qui évite les échecs « connection refused » classiques quand on
@@ -130,14 +130,14 @@ scanne trop tôt.
 Une vulnérabilité est introduite volontairement (`const t = eval(process.argv[2])`), puis poussée.
 Le job `Security Gate - decision` passe au rouge et le pipeline est bloqué :
 
-![Gate en échec — VERDICT : PIPELINE BLOQUE](docs/03-gate-echec.png)
+![Gate en échec — VERDICT : PIPELINE BLOQUE](docs/screenshots/03-gate-echec.png)
 
 Après `git revert`, le pipeline repasse au vert. Cette séquence rouge → vert est la démonstration
 concrète du rôle du gate : ce n'est pas un rapport consultatif, c'est une **condition de merge**.
 
 ### 4.4 Rapport Semgrep et tableau de sévérité
 
-![Résumé Semgrep publié dans le step summary du run](docs/04-resume-semgrep.png)
+![Résumé Semgrep publié dans le step summary du run](docs/screenshots/04-resume-semgrep.png)
 
 Le rapport SARIF est produit par Semgrep puis restitué dans le *step summary* du run et dans les
 artefacts (`semgrep-sarif`). Le classement des règles déclenchées montre la répartition réelle :
@@ -151,7 +151,7 @@ injection SQL et `eval` en tête, puis les règles d'infrastructure (Terraform/A
 
 ### 4.5 Publication en SARIF dans GitHub Code Scanning
 
-![Onglet Security and quality — Code scanning](docs/05-code-scanning.png)
+![Onglet Security and quality — Code scanning](docs/screenshots/05-code-scanning.png)
 
 L'étape `github/codeql-action/upload-sarif` publie le rapport Semgrep dans
 **Security → Code scanning** : les alertes deviennent consultables, filtrables par règle et par
