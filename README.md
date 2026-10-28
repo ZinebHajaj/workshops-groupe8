@@ -1,6 +1,6 @@
 # Workshop 2 — Sécurité du Code Source : SAST avec SonarQube & Semgrep
 
-**Groupe 8** — Zainabe Hajaj · Hasna elhassani · Ouzziki Lhoussaine
+**Groupe 8** — Zineb Hajaj · Hasna elhassani · Ouzziki Lhoussaine
 **Projet analysé :** OWASP Juice Shop (Node.js / Angular / TypeScript)
 **Dépôt :** https://github.com/ZinebHajaj/workshops-groupe8
 
@@ -150,6 +150,6 @@ Ce workshop montre qu'une **analyse SAST en CI** est un garde-fou concret : sans
 
 | Membre | Tâche |
 |---|---|
-| Zainabe Hajaj | SonarQube + Docker : scan, captures du dashboard, correction de 2-3 vulnérabilités |
+| Zineb Hajaj | SonarQube + Docker : scan, captures du dashboard, correction de 2-3 vulnérabilités |
 | Hasna elhassani | Semgrep : installation, scan, captures, correction de 2-3 vulnérabilités différentes + tableau comparatif |
 | Ouzziki Lhoussaine | Pipeline GitHub Actions (checkout, SonarQube, Semgrep, security gate) + README final  |
