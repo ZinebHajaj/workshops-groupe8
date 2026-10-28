@@ -104,9 +104,63 @@ réelle est portée par `tool.driver.rules[].defaultConfiguration.level`. Le gat
 (avec repli sur `security-severity` puis `warning`), sinon il ne bloque jamais. Le script dédoublonne
 aussi par localisation : une même ligne signalée par deux règles ne compte qu'une fois.
 
-▶️ Démonstration du gate (capture à venir dans `docs/ci/`) : un `eval()` volontairement introduit fait
-passer le job `Security Gate - decision` au rouge (`VERDICT : PIPELINE BLOQUE`), puis le revert le
-repasse au vert.
+### 4.1 Le pipeline en fonctionnement
+
+Trois jobs, exécutés en parallèle puis agrégés : `SonarQube - scan + quality gate`,
+`Semgrep - analyse statique` et `Security Gate - decision`.
+
+![Pipeline vert — les 3 jobs réussissent](docs/ci/01-pipeline-vert.png)
+
+![Détail des jobs et durées (SonarQube 1 m 36 s, Semgrep 1 m 13 s, gate 10 s)](docs/ci/02-jobs-detail.png)
+
+Les durées illustrent le compromis des deux outils : SonarQube paie le démarrage de son serveur
+(≈ 50 s pour télécharger et lancer l'image, puis l'indexation), alors que Semgrep analyse tout le
+dépôt en un peu plus d'une minute, sans infrastructure.
+
+### 4.2 SonarQube démarre bien dans le runner
+
+![Démarrage de SonarQube — status UP puis « SonarQube est prêt. »](docs/ci/06-sonarqube-log.png)
+
+Le workflow attend explicitement `status = UP` sur `/api/system/status` avant de lancer le scan
+(boucle de 90 × 5 s) : c'est ce qui évite les échecs « connection refused » classiques quand on
+scanne trop tôt.
+
+### 4.3 Preuve que le security gate bloque le merge
+
+Une vulnérabilité est introduite volontairement (`const t = eval(process.argv[2])`), puis poussée.
+Le job `Security Gate - decision` passe au rouge et le pipeline est bloqué :
+
+![Gate en échec — VERDICT : PIPELINE BLOQUE](docs/ci/03-gate-echec.png)
+
+Après `git revert`, le pipeline repasse au vert. Cette séquence rouge → vert est la démonstration
+concrète du rôle du gate : ce n'est pas un rapport consultatif, c'est une **condition de merge**.
+
+### 4.4 Rapport Semgrep et tableau de sévérité
+
+![Résumé Semgrep publié dans le step summary du run](docs/ci/04-resume-semgrep.png)
+
+Le rapport SARIF est produit par Semgrep puis restitué dans le *step summary* du run et dans les
+artefacts (`semgrep-sarif`). Le classement des règles déclenchées montre la répartition réelle :
+injection SQL et `eval` en tête, puis les règles d'infrastructure (Terraform/AWS), puis les secrets.
+
+> **Lecture honnête de cette capture.** Elle provient du **run initial**, avant correction du bug de
+> sévérité décrit ci-dessus : le tableau affiche « ERROR 0 / Total 117 » alors que le détail des règles
+> est correct. C'est précisément l'illustration du piège rencontré — un rapport dont la sévérité n'est
+> pas lue correctement donne un gate toujours vert. Les runs suivants, après correctif, affichent des
+> compteurs cohérents (65 ERROR, puis 8 après calibrage des règles).
+
+### 4.5 Publication en SARIF dans GitHub Code Scanning
+
+![Onglet Security and quality — Code scanning](docs/ci/05-code-scanning.png)
+
+L'étape `github/codeql-action/upload-sarif` publie le rapport Semgrep dans
+**Security → Code scanning** : les alertes deviennent consultables, filtrables par règle et par
+sévérité, et suivies dans le temps comme n'importe quelle alerte de sécurité du dépôt.
+
+> **Précision** : sur cette capture, les 59 alertes visibles sont détectées par **CodeQL**
+> (workflow présent sur `main`), pas par Semgrep. Pour une preuve spécifique à ce workshop, filtrer
+> l'onglet avec `tool:semgrep` (ou sur la branche `workshop2`) — les alertes Semgrep y portent la
+> catégorie `semgrep`.
 
 ## 5. Résultats SonarQube
 
@@ -331,4 +385,4 @@ par une politique de seuils crédible — donc réellement applicable par une é
 |---|---|
 | **Zineb Hajaj** | SonarQube + Docker : installation, scan, captures du dashboard, analyse de la répartition des issues, correction de vulnérabilités |
 | **Hasna elhassani** | Semgrep : installation, scans avant/après, correctif Terraform (`map_public_ip_on_launch`), corrections de code, tableau de comparaison SonarQube/Semgrep |
-| **Ouzziki Lhoussaine** | Pipeline GitHub Actions (checkout, SonarQube, Semgrep, security gate), correction du bug de sévérité SARIF, calibrage des règles, README final |
+| **Ouzziki Lhoussaine** | Pipeline GitHub Actions (checkout, SonarQube, Semgrep, security gate), correction du bug de sévérité SARIF, calibrage des règles, README final  |
