@@ -71,14 +71,14 @@ Fichier : `.github/workflows/security-pipeline.yml`
 
 ## 5. Résultats SonarQube
 
-_(à compléter par Zainabe — captures dans `docs/sonarqube/`)_
+Scan SonarQube Community (Docker) du projet Juice Shop, avant et après corrections. Captures : [avant](docs/sonarqube/overview-avant.jpeg) · [après](docs/sonarqube/overview-apres.png). Le deuxième scan a fait passer la Quality Gate à Failed (1 nouvelle issue, corrigée ensuite) : les chiffres « après » sont ceux du dernier scan.
 
 | Métrique | Avant | Après |
 |---|---|---|
-| Vulnerabilities | | |
-| Security Hotspots | | |
-| Bugs | | |
-| Quality Gate | | |
+| Vulnerabilities (*Security issues*) | 75 | 71 |
+| Security Hotspots | 0 | 0 |
+| Bugs (*Reliability issues*) | 104 | 104 |
+| Quality Gate | Passed | Passed |
 
 Vulnérabilités corrigées : voir [`docs/vulnerabilites-zainabe.md`](docs/vulnerabilites-zainabe.md)
 
