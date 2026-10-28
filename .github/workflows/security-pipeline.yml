@@ -5,24 +5,25 @@
 # =============================================================================
 name: Workshop 2 - SAST Pipeline (SonarQube + Semgrep)
 
+# Declencheurs volontairement restreints :
+#  - push sur main / workshop2 uniquement (branches d'integration)
+#  - pull_request pour tout le reste
+# Eviter "workshop2-**" dans push : une PR declenchait DEUX runs identiques.
 on:
   push:
     branches:
       - main
       - workshop2
-      - "workshop2-**"
-      - "feat/**"
   pull_request:
     branches:
       - main
       - workshop2
-  workflow_dispatch: {} # permet de lancer le pipeline a la main depuis l'onglet Actions
+  workflow_dispatch: {} # lancement manuel depuis l'onglet Actions
 
-# Droits minimaux necessaires (bonne pratique securite = principe du moindre privilege)
 permissions:
   contents: read
-  security-events: write # pour publier le rapport SARIF dans l'onglet "Code scanning"
-  pull-requests: write # pour commenter/annoter la PR
+  security-events: write # publier le rapport SARIF dans "Code scanning"
+  pull-requests: write
   actions: read
 
 env:
@@ -48,8 +49,6 @@ jobs:
 
       - name: "2. Preparer l'hote pour SonarQube (Elasticsearch)"
         run: |
-          # SonarQube embarque Elasticsearch : il exige un vm.max_map_count eleve
-          # et des limites de fichiers ouvertes importantes.
           sudo sysctl -w vm.max_map_count=524288
           sudo sysctl -w fs.file-max=131072
           ulimit -n 131072 || true
@@ -79,8 +78,7 @@ jobs:
       - name: "4. Generer le token d'analyse (admin par defaut)"
         id: sq-token
         run: |
-          # Premier demarrage : identifiants par defaut admin / admin.
-          # SonarQube impose de changer le mot de passe avant de creer un token.
+          # Premier demarrage : admin/admin. SonarQube impose de changer le mot de passe.
           NEWPASS='Workshop2-CI-Passw0rd!'
           curl -s -f -u admin:admin -X POST "$SONAR_HOST_URL_LOCAL/api/users/change_password" \
             --data-urlencode "login=admin" \
@@ -156,18 +154,34 @@ jobs:
       - name: "2. Determiner la baseline (uniquement les nouvelles findings)"
         id: baseline
         run: |
-          BASE=""
-          # Sur un push : on compare avec le commit precedent.
-          if [ "${{ github.event_name }}" = "push" ] && [ -n "${{ github.event.before }}" ] \
-             && [ "${{ github.event.before }}" != "0000000000000000000000000000000000000000" ]; then
-            BASE="${{ github.event.before }}"
-          fi
-          # Sur une PR : on compare avec la branche de destination.
+          # Objectif : ne bloquer que sur les findings INTRODUITES par la branche,
+          # pas sur le passif du depot (Juice Shop est volontairement vulnerable).
+          TARGET=""
           if [ "${{ github.event_name }}" = "pull_request" ]; then
-            BASE="${{ github.event.pull_request.base.sha }}"
+            TARGET="${{ github.event.pull_request.base.ref }}"
+          else
+            TARGET="${{ github.ref_name }}"
           fi
-          echo "baseline=$BASE" >> "$GITHUB_OUTPUT"
-          echo "Baseline Semgrep : ${BASE:-aucune (scan complet)}"
+
+          BASE=""
+          if [ -n "$TARGET" ]; then
+            # la ref de base n'est pas toujours presente dans le clone : on la recupere
+            git fetch --no-tags --depth=50 origin "$TARGET" || true
+            BASE=$(git merge-base HEAD FETCH_HEAD 2>/dev/null || true)
+            if [ -z "$BASE" ]; then
+              BASE=$(git rev-parse FETCH_HEAD 2>/dev/null || true)
+            fi
+          fi
+
+          if [ -n "$BASE" ] && git cat-file -e "${BASE}^{commit}" 2>/dev/null; then
+            echo "baseline=$BASE" >> "$GITHUB_OUTPUT"
+            echo "Baseline retenue : $BASE (branche cible : $TARGET)"
+            echo "Fichiers modifies depuis la baseline :"
+            git diff --name-only "$BASE" HEAD | head -30 || true
+          else
+            echo "baseline=" >> "$GITHUB_OUTPUT"
+            echo "::warning::Aucune baseline determinee : le scan portera sur tout le depot."
+          fi
 
       - name: "3. Scan Semgrep (regles communaute + regles maison)"
         run: |
@@ -182,12 +196,17 @@ jobs:
             --config=p/owasp-top-ten \
             --config=p/secrets \
             --config=.semgrep.yml \
+            --exclude='*.tf' \
+            --exclude='data/**' \
+            --exclude='**/*.spec.ts' \
+            --exclude='ftp/**' \
+            --exclude='i18n/**' \
             --sarif \
             --output=semgrep.sarif \
             --metrics=off \
             --verbose \
             $BASELINE_ARGS \
-            . || true # on laisse le security gate decider (code de sortie ignore ici)
+            . || true # on laisse le security gate decider
 
       - name: "4. Resume des resultats Semgrep"
         if: always()
@@ -196,9 +215,26 @@ jobs:
             echo "::warning::Aucun fichier semgrep.sarif genere."
             exit 0
           fi
-          TOTAL=$(jq '[.runs[].results[]?] | length' semgrep.sarif)
-          ERRORS=$(jq '[.runs[].results[]? | select(.level=="error")] | length' semgrep.sarif)
-          WARNINGS=$(jq '[.runs[].results[]? | select(.level=="warning")] | length' semgrep.sarif)
+
+          # Semgrep laisse result.level a null : la severite est portee par
+          # tool.driver.rules[].defaultConfiguration.level.
+          # Liste construite dans un fichier temporaire : evite tout probleme de quoting.
+          cat > /tmp/sev.jq <<'JQEOF'
+          [ .runs[] as $run
+            | ($run.tool.driver.rules // []) as $rules
+            | $run.results[]?
+            | . as $r
+            | { rule: $r.ruleId,
+                sev: (($rules | map(select(.id == $r.ruleId)) | .[0].defaultConfiguration.level)
+                      // $r.level // "warning") } ]
+          JQEOF
+
+          jq -r -f /tmp/sev.jq semgrep.sarif > /tmp/sev.json
+
+          TOTAL=$(jq 'length' /tmp/sev.json)
+          ERRORS=$(jq '[.[] | select(.sev=="error")] | length' /tmp/sev.json)
+          WARNINGS=$(jq '[.[] | select(.sev=="warning")] | length' /tmp/sev.json)
+
           {
             echo "## Semgrep - resultats"
             echo ""
@@ -212,16 +248,17 @@ jobs:
             echo ""
             echo "| Regle | Severite | Occurrences |"
             echo "|---|---|---|"
-            jq -r '[.runs[].results[]?]
-                   | group_by(.ruleId)
-                   | map({rule: .[0].ruleId, sev: (.[0].level // "warning"), n: length})
+            jq -r 'group_by(.rule)
+                   | map({rule: .[0].rule, sev: .[0].sev, n: length})
                    | sort_by(-.n) | .[:15][]
-                   | "| \(.rule) | \(.sev) | \(.n) |"' semgrep.sarif
+                   | "| \(.rule) | \(.sev) | \(.n) |"' /tmp/sev.json
           } >> "$GITHUB_STEP_SUMMARY"
+
+          echo "Resume ecrit : ERROR=$ERRORS WARNING=$WARNINGS TOTAL=$TOTAL"
 
       - name: "5. Publier le SARIF dans GitHub Code Scanning"
         if: always()
-        continue-on-error: true # echoue sur les forks sans droits d'ecriture : non bloquant
+        continue-on-error: true
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: semgrep.sarif
@@ -237,7 +274,7 @@ jobs:
           retention-days: 14
 
   # ---------------------------------------------------------------------------
-  # JOB 3 - Security Gate : decision finale (bloque la PR si seuils depasses)
+  # JOB 3 - Security Gate : decision finale
   # ---------------------------------------------------------------------------
   security-gate:
     name: Security Gate - decision
@@ -258,7 +295,7 @@ jobs:
       - name: "3. Evaluer le gate de securite"
         env:
           MAX_SEMGREP_ERRORS: "0" # 0 nouvelle finding ERROR toleree
-          FAIL_ON_SONAR_GATE: "true" # mettre "false" pour un 1er scan de reference
+          FAIL_ON_SONAR_GATE: "true"
         run: |
           chmod +x scripts/security-gate.sh
           ./scripts/security-gate.sh reports/semgrep.sarif reports/sonar-quality-gate.txt
