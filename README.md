@@ -152,4 +152,4 @@ Ce workshop montre qu'une **analyse SAST en CI** est un garde-fou concret : sans
 |---|---|
 | Zainabe Hajaj | SonarQube + Docker : scan, captures du dashboard, correction de 2-3 vulnérabilités |
 | Hasna elhassani | Semgrep : installation, scan, captures, correction de 2-3 vulnérabilités différentes + tableau comparatif |
-| Ouzziki Lhoussaine | Pipeline GitHub Actions (checkout, SonarQube, Semgrep, security gate) + README final + envoi sur Google Classroom |
+| Ouzziki Lhoussaine | Pipeline GitHub Actions (checkout, SonarQube, Semgrep, security gate) + README final  |
