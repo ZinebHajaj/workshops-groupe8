@@ -1,4 +1,4 @@
-# Vulnérabilités corrigées — Zainabe (SonarQube)
+# Vulnérabilités corrigées — Zineb (SonarQube)
 
 Projet analysé : OWASP Juice Shop, avec SonarQube Community lancé dans Docker (projet `workshop2`).
 
