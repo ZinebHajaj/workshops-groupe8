@@ -189,7 +189,22 @@ jobs:
             $BASELINE_ARGS \
             . || true # on laisse le security gate decider (code de sortie ignore ici)
 
-      - name: "4. Resume des resultats Semgrep"
+      - name: "4. Exporter la liste des fichiers modifies"
+        if: always()
+        run: |
+          BASE="${{ steps.baseline.outputs.baseline }}"
+          if [ -n "$BASE" ] && git cat-file -e "$BASE^{commit}" 2>/dev/null; then
+            git diff --name-only "$BASE...HEAD" > changed-files.txt
+          elif git rev-parse --verify HEAD^ >/dev/null 2>&1; then
+            git diff --name-only HEAD^...HEAD > changed-files.txt
+          else
+            # Fallback ultra-defensif (cas commit racine) : on garde un gate strict.
+            git ls-files > changed-files.txt
+          fi
+          sed -i '/^[[:space:]]*$/d' changed-files.txt
+          echo "Fichiers modifies detectes : $(wc -l < changed-files.txt)"
+
+      - name: "5. Resume des resultats Semgrep"
         if: always()
         run: |
           if [ ! -f semgrep.sarif ]; then
@@ -219,7 +234,7 @@ jobs:
                    | "| \(.rule) | \(.sev) | \(.n) |"' semgrep.sarif
           } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: "5. Publier le SARIF dans GitHub Code Scanning"
+      - name: "6. Publier le SARIF dans GitHub Code Scanning"
         if: always()
         continue-on-error: true # echoue sur les forks sans droits d'ecriture : non bloquant
         uses: github/codeql-action/upload-sarif@v3
@@ -227,12 +242,14 @@ jobs:
           sarif_file: semgrep.sarif
           category: semgrep
 
-      - name: "6. Upload de l'artefact Semgrep"
+      - name: "7. Upload de l'artefact Semgrep"
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: semgrep-sarif
-          path: semgrep.sarif
+          path: |
+            semgrep.sarif
+            changed-files.txt
           if-no-files-found: ignore
           retention-days: 14
 
@@ -261,7 +278,7 @@ jobs:
           FAIL_ON_SONAR_GATE: "true" # mettre "false" pour un 1er scan de reference
         run: |
           chmod +x scripts/security-gate.sh
-          ./scripts/security-gate.sh reports/semgrep.sarif reports/sonar-quality-gate.txt
+          ./scripts/security-gate.sh reports/semgrep.sarif reports/sonar-quality-gate.txt reports/changed-files.txt
 
       - name: "4. Resume du gate"
         if: always()

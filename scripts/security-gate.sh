@@ -4,7 +4,7 @@
 # Auteur : Ouzziki Lhoussaine - Groupe 8
 #
 # Usage :
-#   ./scripts/security-gate.sh <semgrep.sarif> <sonar-quality-gate.txt>
+#   ./scripts/security-gate.sh <semgrep.sarif> <sonar-quality-gate.txt> [changed-files.txt]
 #
 # Variables d'environnement :
 #   MAX_SEMGREP_ERRORS   nombre de findings ERROR tolerees (defaut : 0)
@@ -20,6 +20,7 @@ set -uo pipefail
 
 SEMGREP_SARIF="${1:-reports/semgrep.sarif}"
 SONAR_GATE_FILE="${2:-reports/sonar-quality-gate.txt}"
+CHANGED_FILES_FILE="${3:-reports/changed-files.txt}"
 MAX_SEMGREP_ERRORS="${MAX_SEMGREP_ERRORS:-0}"
 FAIL_ON_SONAR_GATE="${FAIL_ON_SONAR_GATE:-true}"
 
@@ -56,6 +57,16 @@ echo ""
 echo "--- [1/2] Semgrep ---------------------------------------------------"
 if [ -f "$SEMGREP_SARIF" ]; then
   FINDINGS=$(jq -r "$SARIF_JQ" "$SEMGREP_SARIF" 2>/dev/null || true)
+
+  FINDINGS_SCOPE="complet"
+  if [ -f "$CHANGED_FILES_FILE" ] && [ -n "$(tr -d '[:space:]' < "$CHANGED_FILES_FILE")" ]; then
+    FINDINGS=$(printf '%s\n' "$FINDINGS" \
+      | awk -F'\t' 'NR==FNR {p=$1; sub(/^\.\//, "", p); files[p]=1; next}
+                    {loc=$3; sub(/:.*/, "", loc); sub(/^\.\//, "", loc); if (files[loc]) print $0}' \
+                      "$CHANGED_FILES_FILE" -)
+    FINDINGS_SCOPE="fichiers modifies"
+  fi
+
   if [ -z "$(printf '%s' "$FINDINGS" | tr -d '[:space:]')" ] && [ -z "$(jq -r '.runs[].results[]? | .ruleId' "$SEMGREP_SARIF" 2>/dev/null)" ]; then
     TOTAL=0; ERRORS=0; WARNINGS=0; NOTES=0
   else
@@ -66,6 +77,7 @@ if [ -f "$SEMGREP_SARIF" ]; then
   fi
 
   echo "  Findings totales : $TOTAL"
+  echo "  Perimetre        : $FINDINGS_SCOPE"
   echo "  ERROR            : $ERRORS   (seuil autorise : $MAX_SEMGREP_ERRORS)"
   echo "  WARNING          : $WARNINGS"
   echo "  NOTE             : $NOTES"
@@ -156,4 +168,3 @@ else
   fi
   exit 1
 fi
-
