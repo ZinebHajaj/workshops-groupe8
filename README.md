@@ -1,246 +1,155 @@
-# ![Juice Shop Logo](https://raw.githubusercontent.com/juice-shop/juice-shop/master/frontend/src/assets/public/images/JuiceShop_Logo_100px.png) OWASP Juice Shop
+# Workshop 2 — Sécurité du Code Source : SAST avec SonarQube & Semgrep
 
-[![OWASP Flagship](https://img.shields.io/badge/owasp-flagship%20project-48A646.svg)](https://owasp.org/projects/#sec-flagships)
-[![GitHub release](https://img.shields.io/github/release/juice-shop/juice-shop.svg)](https://github.com/juice-shop/juice-shop/releases/latest)
-[![Twitter Follow](https://img.shields.io/twitter/follow/owasp_juiceshop.svg?style=social&label=Follow)](https://twitter.com/owasp_juiceshop)
-[![Subreddit subscribers](https://img.shields.io/reddit/subreddit-subscribers/owasp_juiceshop?style=social)](https://reddit.com/r/owasp_juiceshop)
+**Groupe 8** — Zainabe Hajaj · Hasna elhassani · Ouzziki Lhoussaine
+**Projet analysé :** OWASP Juice Shop (Node.js / Angular / TypeScript)
+**Dépôt :** https://github.com/ZinebHajaj/workshops-groupe8
 
-[![CI/CD Pipeline](https://github.com/juice-shop/juice-shop/actions/workflows/ci.yml/badge.svg?branch=develop)](https://github.com/juice-shop/juice-shop/actions/workflows/ci.yml)
-[![Release Pipeline](https://github.com/juice-shop/juice-shop/actions/workflows/release.yml/badge.svg)](https://github.com/juice-shop/juice-shop/actions/workflows/release.yml)
-[![Coverage Status](https://coveralls.io/repos/github/juice-shop/juice-shop/badge.svg?branch=develop)](https://coveralls.io/github/juice-shop/juice-shop?branch=develop)
-[![Cypress tests](https://img.shields.io/endpoint?url=https://dashboard.cypress.io/badge/simple/3hrkhu/develop&style=flat&logo=cypress)](https://dashboard.cypress.io/projects/3hrkhu/runs)
-[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/223/badge)](https://www.bestpractices.dev/projects/223)
-![GitHub stars](https://img.shields.io/github/stars/juice-shop/juice-shop.svg?label=GitHub%20%E2%98%85&style=flat)
-[![Static Badge](https://img.shields.io/badge/OWASP-Code_of_Conduct-blue)](CODE_OF_CONDUCT.md)
+---
 
-> [The most trustworthy online shop out there.](https://twitter.com/dschadow/status/706781693504589824)
-> ([@dschadow](https://github.com/dschadow)) —
-> [The best juice shop on the whole internet!](https://twitter.com/shehackspurple/status/907335357775085568)
-> ([@shehackspurple](https://twitter.com/shehackspurple)) —
-> [Actually the most bug-free vulnerable application in existence!](https://youtu.be/TXAztSpYpvE?t=26m35s)
-> ([@vanderaj](https://twitter.com/vanderaj)) —
-> [First you 😂😂then you 😢](https://twitter.com/kramse/status/1073168529405472768)
-> ([@kramse](https://twitter.com/kramse)) —
-> [But this doesn't have anything to do with juice.](https://twitter.com/coderPatros/status/1199268774626488320)
-> ([@coderPatros' wife](https://twitter.com/coderPatros))
+## 1. Objectif
 
-OWASP Juice Shop is probably the most modern and sophisticated insecure web application! It can be used in security
-trainings, awareness demos, CTFs and as a guinea pig for security tools! Juice Shop encompasses vulnerabilities from the
-entire
-[OWASP Top Ten](https://owasp.org/www-project-top-ten) along with many other security flaws found in real-world
-applications!
+Ce workshop met en place une **analyse statique de sécurité (SAST)** sur une application volontairement vulnérable, puis l'intègre dans un **pipeline CI** qui bloque automatiquement toute nouvelle vulnérabilité.
 
-![Juice Shop Screenshot Slideshow](screenshots/slideshow.gif)
+Trois objectifs :
 
-For a detailed introduction, full list of features and architecture overview please visit the official project page:
-<https://owasp-juice.shop>
+1. Configurer **SonarQube** (via Docker) et **Semgrep** sur le code du projet ;
+2. Détecter puis **corriger** des vulnérabilités intentionnelles (injections, XSS, mauvaises pratiques) ;
+3. **Comparer** les deux outils pour comprendre leurs limites, leur complémentarité et leurs cas d'usage.
 
-## Table of contents
+## 2. Outils utilisés
 
-- [Setup](#setup)
-    - [From Sources](#from-sources)
-    - [Packaged Distributions](#packaged-distributions)
-    - [Docker Container](#docker-container)
-    - [Vagrant](#vagrant)
-- [Demo](#demo)
-- [Documentation](#documentation)
-    - [Node.js version compatibility](#nodejs-version-compatibility)
-    - [Troubleshooting](#troubleshooting)
-    - [Official companion guide](#official-companion-guide)
-- [Contributing](#contributing)
-- [References](#references)
-- [Merchandise](#merchandise)
-- [Donations](#donations)
-- [Contributors](#contributors)
-- [Licensing](#licensing)
+| Outil | Version | Rôle |
+|---|---|---|
+| SonarQube Community | `lts-community` (Docker) | Analyse globale : bugs, vulnérabilités, *code smells*, *security hotspots*, Quality Gate |
+| Semgrep | `semgrep/semgrep:latest` (+ `p/default`, `p/owasp-top-ten`, `p/secrets`, `.semgrep.yml`) | Détection de patterns de sécurité précis, rapide, règles personnalisables |
+| GitHub Actions | — | Orchestration du pipeline CI |
+| Docker / Docker Compose | — | Exécution locale de SonarQube |
 
-## Setup
+## 3. Organisation du dépôt (branches)
 
-> You can find some less common installation variations as well as instructions to run Juice Shop on a variety of cloud computing providers in
-> [the _Running OWASP Juice Shop_ documentation](https://pwning.owasp-juice.shop/companion-guide/latest/part1/running.html).
+```
+main                    version stable / rendu final
+ └── workshop2          branche du workshop 2 (intégration)
+      ├── workshop2-zainabe   SonarQube + Docker
+      ├── workshop2-hasna     Semgrep
+      └── workshop2-lhoussaine    Pipeline CI + README
+```
 
-> Some challenges require an AI/LLM provider to work properly. Check the
-> [_Setting up external dependencies_ documentation](https://pwning.owasp-juice.shop/companion-guide/snapshot/part1/running.html#_setting_up_external_dependencies)
-> for instructions on configuring local or cloud-based AI providers.
+Convention : une branche par workshop créée depuis `main`, une branche par personne créée depuis la branche du workshop, intégration uniquement par **Pull Request**.
 
-### From Sources
+## 4. Pipeline CI (GitHub Actions)
 
-![GitHub repo size](https://img.shields.io/github/repo-size/juice-shop/juice-shop.svg)
+Fichier : `.github/workflows/security-pipeline.yml`
 
-1. Install [node.js](#nodejs-version-compatibility)
-2. Run `git clone https://github.com/juice-shop/juice-shop.git --depth 1` (or
-   clone [your own fork](https://github.com/juice-shop/juice-shop/fork)
-   of the repository)
-3. Go into the cloned folder with `cd juice-shop`
-4. Run `npm install` (only has to be done before first start or when you change the source code)
-5. Run `npm start`
-6. Browse to <http://localhost:3000>
+```
+ push / pull_request
+        │
+        ▼
+ ┌──────────────┐   ┌────────────────────────────┐   ┌──────────────────────┐
+ │ 1. Checkout  │   │ 2a. SonarQube (Docker)     │   │ 2b. Semgrep          │
+ │    du code   │──▶│   démarrage + scan         │   │   scan + SARIF       │
+ └──────────────┘   │   + Quality Gate           │   │   + Code Scanning    │
+                    └────────────────────────────┘   └──────────────────────┘
+                                   │                          │
+                                   ▼                          ▼
+                        ┌──────────────────────────────────────────┐
+                        │ 3. SECURITY GATE (scripts/security-gate.sh)│
+                        │   ÉCHEC si :                              │
+                        │    • ≥ 1 nouvelle finding Semgrep ERROR   │
+                        │    • Quality Gate SonarQube = FAILED      │
+                        └──────────────────────────────────────────┘
+```
 
-### Packaged Distributions
+**Étapes clés :**
 
-[![GitHub release](https://img.shields.io/github/downloads/juice-shop/juice-shop/total.svg)](https://github.com/juice-shop/juice-shop/releases/latest)
-[![SourceForge](https://img.shields.io/sourceforge/dm/juice-shop?label=sourceforge%20downloads)](https://sourceforge.net/projects/juice-shop/)
-[![SourceForge](https://img.shields.io/sourceforge/dt/juice-shop?label=sourceforge%20downloads)](https://sourceforge.net/projects/juice-shop/)
+1. **Checkout** — `actions/checkout@v4` avec `fetch-depth: 0` (historique complet nécessaire au calcul du *new code*).
+2. **SonarQube** — le serveur `sonarqube:lts-community` est démarré dans le runner, un token d'analyse est généré via l'API, puis `sonar-scanner` analyse le projet ; le Quality Gate est récupéré par `sonarqube-quality-gate-action`.
+3. **Semgrep** — scan avec les règles communautaires **et** les règles maison de `.semgrep.yml`, sortie **SARIF** publiée dans l'onglet *Security → Code scanning* de GitHub. Le mode `--baseline-commit` limite le rapport aux **nouvelles** findings.
+4. **Security gate** — script Bash qui agrège les deux rapports et **fait échouer le pipeline** si les seuils sont dépassés. C'est ce gate qui empêche une PR vulnérable d'être mergée.
 
-1. Install a 64bit [node.js](#nodejs-version-compatibility) on your Windows, MacOS or Linux machine
-2. Download `juice-shop-<version>_<node-version>_<os>_x64.zip` (or
-   `.tgz`) attached to
-   [latest release](https://github.com/juice-shop/juice-shop/releases/latest)
-3. Unpack and `cd` into the unpacked folder
-4. Run `npm start`
-5. Browse to <http://localhost:3000>
+> Captures : `docs/ci/` (run vert, détail des jobs, SARIF dans Code Scanning)
 
-> Each packaged distribution includes some binaries for `sqlite3` and
-> `libxmljs2` bound to the OS and node.js version which `npm install` was
-> executed on.
+## 5. Résultats SonarQube
 
-### Docker Container
+_(à compléter par Zainabe — captures dans `docs/sonarqube/`)_
 
-[![Docker Pulls](https://img.shields.io/docker/pulls/bkimminich/juice-shop.svg)](https://hub.docker.com/r/bkimminich/juice-shop)
-![Docker Stars](https://img.shields.io/docker/stars/bkimminich/juice-shop.svg)
-[![](https://images.microbadger.com/badges/image/bkimminich/juice-shop.svg)](https://microbadger.com/images/bkimminich/juice-shop
-"Get your own image badge on microbadger.com")
-[![](https://images.microbadger.com/badges/version/bkimminich/juice-shop.svg)](https://microbadger.com/images/bkimminich/juice-shop
-"Get your own version badge on microbadger.com")
+| Métrique | Avant | Après |
+|---|---|---|
+| Vulnerabilities | | |
+| Security Hotspots | | |
+| Bugs | | |
+| Quality Gate | | |
 
-1. Install [Docker](https://www.docker.com)
-2. Run `docker pull bkimminich/juice-shop`
-3. Run `docker run --rm -p 127.0.0.1:3000:3000 bkimminich/juice-shop`
-4. Browse to <http://localhost:3000> (on macOS and Windows browse to
-   <http://192.168.99.100:3000> if you are using docker-machine instead of the native docker installation)
+Vulnérabilités corrigées : voir [`docs/vulnerabilites-zainabe.md`](docs/vulnerabilites-zainabe.md)
 
-### Vagrant
+## 6. Résultats Semgrep
 
-1. Install [Vagrant](https://www.vagrantup.com/downloads.html) and
-   [Virtualbox](https://www.virtualbox.org/wiki/Downloads)
-2. Run `git clone https://github.com/juice-shop/juice-shop.git` (or
-   clone [your own fork](https://github.com/juice-shop/juice-shop/fork)
-   of the repository)
-3. Run `cd vagrant && vagrant up`
-4. Browse to [192.168.56.110](http://192.168.56.110)
+_(à compléter par Hasna — captures dans `docs/semgrep/`)_
 
-## Demo
+| Configuration | Findings ERROR | Findings WARNING |
+|---|---|---|
+| `p/default` | | |
+| `p/owasp-top-ten` | | |
+| `.semgrep.yml` (règles maison) | | |
 
-Feel free to have a look at the latest version of OWASP Juice Shop:
-<http://demo.owasp-juice.shop>
+Vulnérabilités corrigées : voir [`docs/vulnerabilites-hasna.md`](docs/vulnerabilites-hasna.md)
 
-> This is a deployment-test and sneak-peek instance only! You are __not
-> supposed__ to use this instance for your own hacking endeavours! No
-> guaranteed uptime! Guaranteed stern looks if you break it!
+## 7. Comparaison SonarQube vs Semgrep
 
-## Documentation
+_(synthèse du tableau détaillé de Hasna : [`docs/comparaison-sonarqube-semgrep.md`](docs/comparaison-sonarqube-semgrep.md))_
 
-### Node.js version compatibility
+| Critère | SonarQube | Semgrep |
+|---|---|---|
+| Approche | Analyse sémantique complète (AST, flux de données, moteur multi-langages) | Correspondance de patterns (`pattern`, `pattern-either`, `taint mode`) |
+| Couverture | Très large : bugs, vulnérabilités, maintenabilité, duplication, couverture | Ciblée sécurité + patterns personnalisés |
+| Rapidité | Lent (serveur + indexation, plusieurs minutes) | Très rapide (quelques secondes à minutes) |
+| Configuration | `sonar-project.properties` + serveur | Fichier YAML lisible, pas de serveur |
+| Faux positifs | Nombreux (règles génériques, style) | Faibles si les règles sont bien écrites |
+| Qualité de la règle | Standardisée, non modifiable (CE) | Totalement personnalisable, versionnée avec le code |
+| Intégration CI | Serveur à héberger + token + Quality Gate | Binaire/conteneur autonome, SARIF natif |
+| Cas d'usage idéal | Suivi global de la qualité et de la dette technique dans le temps | Contrôle de pattern en pré-commit / PR, règles métier, secrets |
 
-![GitHub package.json dynamic](https://img.shields.io/github/package-json/cpu/juice-shop/juice-shop)
-![GitHub package.json dynamic](https://img.shields.io/github/package-json/os/juice-shop/juice-shop)
+**Complémentarité** : SonarQube donne la **vue d'ensemble et la tendance** ; Semgrep donne le **contrôle fin, rapide et sur mesure**. Les deux se recoupent partiellement (ex. injection SQL) mais chacun détecte des vulnérabilités que l'autre manque. C'est pour cela que le pipeline exécute **les deux en parallèle** derrière un gate unique.
 
-OWASP Juice Shop officially supports the following versions of
-[node.js](http://nodejs.org) in line with the official
-[node.js LTS schedule](https://github.com/nodejs/LTS) as close as possible. Docker images and packaged distributions are
-offered accordingly.
+## 8. Difficultés rencontrées et limites
 
-| node.js | Supported              | Tested             | [Packaged Distributions](#packaged-distributions) | [Docker images](#docker-container) from `master` | [Docker images](#docker-container) from `develop` |
-|:--------|:-----------------------|:-------------------|:--------------------------------------------------|:-------------------------------------------------|:--------------------------------------------------|
-| 26.x    | :heavy_check_mark:     | :heavy_check_mark: |                                                   |                                                  |                                                   |
-| 25.x    | ( :heavy_check_mark: ) | :x:                |                                                   |                                                  |                                                   |
-| 24.x    | :heavy_check_mark:     | :heavy_check_mark: | Windows (`x64`), MacOS (`x64`), Linux (`x64`)     | `latest` (`linux/amd64`, `linux/arm64`)          | `snapshot` (`linux/amd64`, `linux/arm64`)         |
-| 23.x    | :x:                    | :x:                |                                                   |                                                  |                                                   |
-| 22.x    | :heavy_check_mark:     | :heavy_check_mark: |                                                   |                                                  |                                                   |
-| <22.x   | :x:                    | :x:                |                                                   |                                                  |                                                   |
+- SonarQube nécessite un serveur (≈ 2 Go de RAM) : démarrage de 1 à 3 min dans le runner, `vm.max_map_count` à ajuster pour Elasticsearch.
+- L'édition **Community** ne gère pas l'analyse multi-branches ni les *pull request decorations* → un seul projet par dépôt.
+- Le premier scan considère tout le code comme « nouveau » : le Quality Gate échoue nécessairement au run initial (baseline).
+- Semgrep, sans baseline, remonte beaucoup de findings sur un projet volontairement vulnérable comme Juice Shop → nécessité de filtrer (`--baseline-commit`, exclusions) puis de trier les faux positifs.
+- Corriger une vulnérabilité dans Juice Shop peut casser une fonctionnalité (l'app est pédagogiquement piégée) : chaque correctif a été revérifié avec `npm start`.
 
-Juice Shop is automatically tested _only on the latest `.x` minor version_ of each node.js version mentioned above!
-There is no guarantee that older minor node.js releases will always work with Juice Shop!
-Please make sure you stay up to date with your chosen version.
+## 9. Reproduire en local
 
-### Troubleshooting
+```bash
+git clone https://github.com/ZinebHajaj/workshops-groupe8.git
+cd workshops-groupe8
+git checkout main
 
-[![Gitter](http://img.shields.io/badge/gitter-join%20chat-1dce73.svg)](https://gitter.im/bkimminich/juice-shop)
+# 1) Application
+npm install
+npm start                     # http://localhost:3000
 
-If you need help with the application setup please check 
-[our existing _Troubleshooting_](https://pwning.owasp-juice.shop/companion-guide/latest/part4/troubleshooting.html)
-guide. If this does not solve your issue please post your specific problem or question in the
-[Gitter Chat](https://gitter.im/bkimminich/juice-shop) where community members can best try to help you.
+# 2) SonarQube
+docker compose -f infrastructure/docker-compose.sonarqube.yml up -d
+# http://localhost:9000  (admin / admin, changement de mot de passe imposé)
 
-:stop_sign: **Please avoid opening GitHub issues for support requests or questions!**
+# 3) Semgrep
+docker run --rm -v "$PWD:/src" semgrep/semgrep \
+  semgrep scan --config=p/default --config=p/owasp-top-ten --config=.semgrep.yml /src
 
-### Official companion guide
+# 4) Le gate, à la main
+./scripts/security-gate.sh semgrep.sarif sonar-quality-gate.txt
+```
 
-[![Write Goodreads Review](https://img.shields.io/badge/goodreads-write%20review-49557240.svg)](https://www.goodreads.com/review/edit/49557240)
+## 10. Conclusion
 
-OWASP Juice Shop comes with an official companion guide eBook. It will give you a complete overview of all
-vulnerabilities found in the application including hints how to spot and exploit them. In the appendix you will even
-find complete step-by-step solutions to every challenge. Extensive documentation of
-[custom re-branding](https://pwning.owasp-juice.shop/companion-guide/latest/part4/customization.html),
-[CTF-support](https://pwning.owasp-juice.shop/companion-guide/latest/part4/ctf.html),
-[trainer's guide](https://pwning.owasp-juice.shop/companion-guide/latest/part4/trainers.html)
-and much more is also included.
+Ce workshop montre qu'une **analyse SAST en CI** est un garde-fou concret : sans gate, les alertes restent des rapports ignorés ; avec un gate, une vulnérabilité critique **empêche le merge**. La comparaison des deux outils montre aussi qu'il n'existe pas d'outil unique : la valeur vient de la **combinaison** d'une analyse sémantique large (SonarQube) et de règles de patterns rapides et personnalisables (Semgrep), pilotées par une politique de blocage claire.
 
-[Pwning OWASP Juice Shop](https://leanpub.com/juice-shop) is published under
-[CC BY-NC-ND 4.0](https://creativecommons.org/licenses/by-nc-nd/4.0/)
-and is available **for free** in PDF, Kindle and ePub format on LeanPub. You can also
-[browse the full content online](https://pwning.owasp-juice.shop)!
+## 11. Répartition du travail
 
-[<img alt="Pwning OWASP Juice Shop cover" src="https://raw.githubusercontent.com/juice-shop/pwning-juice-shop/master/docs/modules/ROOT/assets/images/cover.jpg" width="200"/>](https://leanpub.com/juice-shop)
-[<img alt="Pwning OWASP Juice Shop back cover" src="https://raw.githubusercontent.com/juice-shop/pwning-juice-shop/master/docs/modules/ROOT/assets/images/introduction/back.jpg" width="200"/>](https://leanpub.com/juice-shop)
-
-## Contributing
-
-[![GitHub contributors](https://img.shields.io/github/contributors/juice-shop/juice-shop.svg)](https://github.com/juice-shop/juice-shop/graphs/contributors)
-[![JavaScript Style Guide](https://img.shields.io/badge/code%20style-standard-brightgreen.svg)](http://standardjs.com/)
-[![Crowdin](https://d322cqt584bo4o.cloudfront.net/owasp-juice-shop/localized.svg)](https://crowdin.com/project/owasp-juice-shop)
-![GitHub issues by-label](https://img.shields.io/github/issues/juice-shop/juice-shop/help%20wanted.svg)
-![GitHub issues by-label](https://img.shields.io/github/issues/juice-shop/juice-shop/good%20first%20issue.svg)
-
-We are always happy to get new contributors on board! Please check
-[CONTRIBUTING.md](CONTRIBUTING.md) to learn how to
-[contribute to our codebase](CONTRIBUTING.md#code-contributions) or the
-[translation into different languages](CONTRIBUTING.md#i18n-contributions)!
-
-## References
-
-Did you write a blog post, magazine article or do a podcast about or mentioning OWASP Juice Shop? Or maybe you held or
-joined a conference talk or meetup session, a hacking workshop or public training where this project was mentioned?
-
-Add it to our ever-growing list of [REFERENCES.md](REFERENCES.md) by forking and opening a Pull Request!
-
-## Merchandise
-
-* On [Spreadshirt.com](http://shop.spreadshirt.com/juiceshop) and
-  [Spreadshirt.de](http://shop.spreadshirt.de/juiceshop) you can get some swag (Shirts, Hoodies, Mugs) with the official
-  OWASP Juice Shop logo
-* On
-  [StickerYou.com](https://www.stickeryou.com/products/owasp-juice-shop/794)
-  you can get variants of the OWASP Juice Shop logo as single stickers to decorate your laptop with. They can also print
-  magnets, iron-ons, sticker sheets and temporary tattoos.
-
-## Donations
-
-[![](https://img.shields.io/badge/support-owasp%20juice%20shop-blue)](https://owasp.org/donate/?reponame=www-project-juice-shop&title=OWASP+Juice+Shop)
-
-The OWASP Foundation gratefully accepts donations via Stripe. Projects such as Juice Shop can then request reimbursement
-for expenses from the Foundation. If you'd like to express your support of the Juice Shop project, please make sure to
-tick the "Publicly list me as a supporter of OWASP Juice Shop" checkbox on the donation form. You can find our more
-about donations and how they are used here:
-
-<https://pwning.owasp-juice.shop/companion-guide/latest/part3/donations.html>
-
-## Contributors
-
-The OWASP Juice Shop Project Leaders are:
-
-- [Björn Kimminich](https://github.com/bkimminich) aka `bkimminich` [![Keybase PGP](https://img.shields.io/keybase/pgp/bkimminich)](https://keybase.io/bkimminich)
-- [Jannik Hollenbach](https://github.com/J12934) aka `J12934`
-
-For a list of all contributors to the OWASP Juice Shop please visit our
-[HALL_OF_FAME.md](HALL_OF_FAME.md).
-
-## Licensing
-
-[![license](https://img.shields.io/github/license/juice-shop/juice-shop.svg)](LICENSE)
-
-This program is free software: you can redistribute it and/or modify it under the terms of the [MIT license](LICENSE).
-OWASP Juice Shop and any contributions are Copyright © by Bjoern Kimminich & the OWASP Juice Shop contributors
-2014-2026.
-
-![Juice Shop Logo](https://raw.githubusercontent.com/juice-shop/juice-shop/master/frontend/src/assets/public/images/JuiceShop_Logo_400px.png)
+| Membre | Tâche |
+|---|---|
+| Zainabe Hajaj | SonarQube + Docker : scan, captures du dashboard, correction de 2-3 vulnérabilités |
+| Hasna elhassani | Semgrep : installation, scan, captures, correction de 2-3 vulnérabilités différentes + tableau comparatif |
+| Ouzziki Lhoussaine | Pipeline GitHub Actions (checkout, SonarQube, Semgrep, security gate) + README final + envoi sur Google Classroom |
