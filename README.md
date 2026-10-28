@@ -80,19 +80,40 @@ _(à compléter par Zainabe — captures dans `docs/sonarqube/`)_
 | Bugs | | |
 | Quality Gate | | |
 
-Vulnérabilités corrigées : voir [`docs/vulnerabilites-zainabe.md`](docs/vulnerabilites-zainabe.md)
 
 ## 6. Résultats Semgrep
 
-_(à compléter par Hasna — captures dans `docs/semgrep/`)_
+Configurations utilisées : `p/default` + `p/owasp-top-ten` + `p/secrets` + `.semgrep.yml` (règles maison).
+Exclusions : `data/**` (snippets pédagogiques de Juice Shop), `**/*.spec.ts`, `ftp/**`, `i18n/**`.
 
-| Configuration | Findings ERROR | Findings WARNING |
-|---|---|---|
-| `p/default` | | |
-| `p/owasp-top-ten` | | |
-| `.semgrep.yml` (règles maison) | | |
+| Étape | Findings | ERROR | WARNING |
+|---|---|---|---|
+| Scan initial (règles non calibrées) | 117 | 65 | 49 |
+| Après calibrage des règles + exclusions | 30 | 8 | 21 |
+| Après corrections de l'équipe | _à remplir_ | _à remplir_ | _à remplir_ |
 
-Vulnérabilités corrigées : voir [`docs/vulnerabilites-hasna.md`](docs/vulnerabilites-hasna.md)
+> Détail du calibrage et des faux positifs écartés : [`docs/RESULTATS-semgrep.md`](docs/RESULTATS-semgrep.md)
+
+### 6.1 Vulnérabilités corrigées par Hasna (Terraform)
+
+Détection Semgrep : `terraform.aws.security.aws-subnet-has-public-ip-address` — des sous-réseaux AWS
+exposent une IP publique (`map_public_ip_on_launch = true`), ce qui expose directement les instances
+lancées dans ces sous-réseaux à Internet. Correction : passage de la valeur à `false`.
+
+| Vue | Capture |
+|---|---|
+| Scan avant correction | ![Scan Semgrep avant correction](semgrep/screenshots/scan-avant1.png) |
+| Détail de la règle et du fichier concerné | ![Détail du scan](semgrep/screenshots/03-scan-apres-terraform.png) |
+| Diff / preuve de la correction | ![Correction Terraform](semgrep/screenshots/correction-terraform.png) |
+
+### 6.2 Vulnérabilités corrigées par Hasna (code applicatif)
+
+| # | Fichier:ligne | Règle | Catégorie | Correctif |
+|---|---|---|---|---|
+| 1 | | | | |
+| 2 | | | | |
+
+Vulnérabilités corrigées (détail complet) : voir [`docs/vulnerabilites-hasna.md`](docs/vulnerabilites-hasna.md)
 
 ## 7. Comparaison SonarQube vs Semgrep
 
