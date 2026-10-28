@@ -48,16 +48,25 @@ Trois objectifs :
 
 ## 3. Organisation du dépôt (branches)
 
+**Chaque workshop est livré sur sa propre branche** : `main` reste le projet de base (import
+d'OWASP Juice Shop) et ne reçoit pas le travail des workshops. Le rendu du workshop 2 est donc
+la branche **`workshop2`**, pas `main`.
+
 ```
-main                          version stable (rendu final)
- └── workshop2                branche d'intégration du workshop 2
+main                          projet de base (Juice Shop) — non modifié par les workshops
+ └── workshop2                LIVRABLE du workshop 2 (intégration)
       ├── workshop2-sonar-zineb      SonarQube + Docker + corrections
       ├── workshop2-sast-hasna       Semgrep + corrections Terraform/code
       └── workshop2-lhoussaine       Pipeline GitHub Actions + security gate + README
+
+ 
+
 ```
 
-Convention adoptée : une branche par workshop créée depuis `main`, une branche par membre
-créée depuis la branche du workshop, intégration par **Pull Request** vers `workshop2`.
+Convention adoptée : une branche **par workshop** créée depuis `main`, une branche **par membre**
+créée depuis la branche du workshop, intégration par **Pull Request** vers la branche du workshop.
+Aucune branche de workshop n'est mergée dans `main` : la branche du workshop est le rendu final et
+doit être conservée telle quelle.
 
 | Branche | Auteur | Contenu |
 |---|---|---|
@@ -65,6 +74,11 @@ créée depuis la branche du workshop, intégration par **Pull Request** vers `w
 | `workshop2-sonar-zineb` | Zineb Hajaj | `sonar-project.properties`, instance SonarQube, captures du dashboard, correctifs |
 | `workshop2-sast-hasna` | Hasna elhassani | `.semgrep.yml`, scans Semgrep, correctif Terraform, tableau comparatif |
 | `workshop2-lhoussaine` | Ouzziki Lhoussaine | `.github/workflows/security-pipeline.yml`, `scripts/security-gate.sh`, README |
+
+> **Branche de rendu :** `workshop2` — c'est l'URL à déposer sur Google Classroom :
+> `https://github.com/ZinebHajaj/workshops-groupe8/tree/workshop2`
+> Le workflow CI (`.github/workflows/security-pipeline.yml`) est présent sur cette branche : le
+> dernier run vert de l'onglet **Actions** sur `workshop2` constitue la preuve d'exécution.
 
 ## 4. Pipeline CI
 
@@ -385,3 +399,4 @@ par une politique de seuils crédible — donc réellement applicable par une é
 | **Zineb Hajaj** | SonarQube + Docker : installation, scan, captures du dashboard, analyse de la répartition des issues, correction de vulnérabilités |
 | **Hasna elhassani** | Semgrep : installation, scans avant/après, correctif Terraform (`map_public_ip_on_launch`), corrections de code, tableau de comparaison SonarQube/Semgrep |
 | **Ouzziki Lhoussaine** | Pipeline GitHub Actions (checkout, SonarQube, Semgrep, security gate), correction du bug de sévérité SARIF, calibrage des règles, README final  |
+
