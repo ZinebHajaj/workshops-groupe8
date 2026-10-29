@@ -20,8 +20,15 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Installer les dépendances (postinstall construit le frontend)
+      - name: Installer les dépendances du serveur
+        run: npm install --ignore-scripts
+
+      - name: Installer les dépendances du frontend
+        working-directory: frontend
         run: npm install
+
+      - name: Compiler le frontend
+        run: npm run build:frontend
 
       - name: Compiler le serveur (TypeScript)
         run: npm run build:server
