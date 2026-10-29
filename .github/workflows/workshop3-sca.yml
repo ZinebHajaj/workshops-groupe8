@@ -25,7 +25,7 @@ jobs:
 
       - name: Installer les dépendances du frontend
         working-directory: frontend
-        run: npm install
+        run: npm install --legacy-peer-deps   # contournement du bug npm (peer deps)
 
       - name: Compiler le frontend
         run: npm run build:frontend
@@ -48,7 +48,7 @@ jobs:
       - name: Préparer les lockfiles (versions exactes des dépendances)
         run: |
           npm install --package-lock-only --package-lock=true --ignore-scripts
-          (cd frontend && npm install --package-lock-only --package-lock=true --ignore-scripts)
+          (cd frontend && npm install --package-lock-only --package-lock=true --ignore-scripts --legacy-peer-deps)
           ls -l package-lock.json frontend/package-lock.json
 
       - name: Cache de la base NVD
