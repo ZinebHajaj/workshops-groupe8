@@ -1,0 +1,178 @@
+# =============================================================================
+# Regles Semgrep "maison" - Workshop 2 - Groupe 8
+# v3 - regles calibrees sur le depot reel (Juice Shop)
+#
+# Enseignements de la v1 :
+#  - `$DB.get(...)` remontait les appels Angular `this.http.get(url + param)`
+#    du dossier frontend/ : faux positifs en masse (35 ERROR dont ~30 FP).
+#  - les snippets pedagogiques `data/static/codefixes/**` et le faux utilisateur
+#    `data/static/users.yml` sont volontairement vulnerables : ils ne doivent
+#    pas entrer dans le gate.
+#  - un `message:` non quote contenant " : " casse le YAML (semgrep refuse la
+#    config entiere et le scan retourne 0 finding). Messages toujours quotes.
+# =============================================================================
+rules:
+  # ---------------------------------------------------------------- Injection SQL
+  - id: groupe8-sql-injection-concat
+    languages: [javascript, typescript]
+    severity: ERROR
+    message: "Requete SQL construite par concatenation ou template : injection SQL. Utilisez des placeholders (?) ou un ORM."
+    metadata:
+      category: security
+      cwe: ["CWE-89: Improper Neutralization of Special Characters used in SQL Commands"]
+      owasp: "A03:2021 - Injection"
+    patterns:
+      # On ne cible que les methodes d'acces a la base (query/run/prepare/exec).
+      # Les .get()/.all() d'Angular HttpClient sont volontairement exclus.
+      - pattern-either:
+          - pattern: $DB.query($A + $B, ...)
+          - pattern: $DB.query(`...${...}...`, ...)
+          - pattern: $DB.run($A + $B, ...)
+          - pattern: $DB.run(`...${...}...`, ...)
+          - pattern: $DB.prepare($A + $B, ...)
+          - pattern: $DB.exec($A + $B, ...)
+    paths:
+      exclude:
+        - "frontend/**"
+        - "data/**"
+        - "test/**"
+        - "**/*.spec.ts"
+
+  # ------------------------------------------------------------ XSS / innerHTML
+  - id: groupe8-xss-innerhtml
+    languages: [javascript, typescript]
+    severity: ERROR
+    message: "Affectation directe a innerHTML/outerHTML : risque de XSS. Utilisez textContent ou une sanitisation."
+    metadata:
+      category: security
+      cwe: ["CWE-79: Improper Neutralization of Input During Web Page Generation"]
+      owasp: "A03:2021 - Injection"
+    patterns:
+      - pattern-either:
+          - pattern: $EL.innerHTML = $INPUT
+          - pattern: $EL.outerHTML = $INPUT
+    paths:
+      exclude:
+        - "data/**"
+        - "test/**"
+        - "**/*.spec.ts"
+
+  # ------------------------------------------------- Eval / execution dynamique
+  - id: groupe8-eval-usage
+    languages: [javascript, typescript]
+    severity: ERROR
+    message: "Utilisation de eval() / new Function() : execution de code arbitraire. Remplacez par une logique explicite."
+    metadata:
+      category: security
+      cwe: ["CWE-95: Improper Neutralization of Directives in Dynamically Evaluated Code"]
+      owasp: "A03:2021 - Injection"
+    patterns:
+      - pattern-either:
+          - pattern: eval(...)
+          - pattern: new Function(...)
+      - pattern-not: eval("...") # chaine litterale = inoffensif
+    paths:
+      exclude:
+        - "data/**"
+        - "test/**"
+        - "**/*.spec.ts"
+
+  # --------------------------------------------------- Secrets en dur
+  - id: groupe8-hardcoded-secret
+    languages: [javascript, typescript]
+    severity: ERROR
+    message: "Secret (mot de passe, cle API, token) ecrit en dur. Utilisez une variable d'environnement ou un gestionnaire de secrets."
+    metadata:
+      category: security
+      cwe: ["CWE-798: Use of Hard-coded Credentials"]
+      owasp: "A07:2021 - Identification and Authentication Failures"
+    patterns:
+      - pattern-regex: "(?i)(password|passwd|secret|api[_-]?key|private[_-]?key)\\s*[:=]\\s*['\"][^'\"\\s]{8,}['\"]"
+      - pattern-not-regex: "(?i)(password|secret|token)\\s*[:=]\\s*''"
+    paths:
+      exclude:
+        - "test/**"
+        - "**/*.spec.ts"
+        - "data/**"
+        - "i18n/**"
+        - "docs/**"
+        - ".github/**"
+        - "config/**"
+        - "encryptionkeys/**"
+
+  # --------------------------------------- Verification TLS desactivee
+  - id: groupe8-tls-verification-disabled
+    languages: [javascript, typescript]
+    severity: WARNING
+    message: "Verification des certificats TLS desactivee : vulnerabilite MITM. Supprimez rejectUnauthorized:false."
+    metadata:
+      category: security
+      cwe: ["CWE-295: Improper Certificate Validation"]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              {..., rejectUnauthorized: false, ...}
+          - pattern: process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0"
+    paths:
+      exclude:
+        - "data/**"
+        - "test/**"
+        - "**/*.spec.ts"
+
+  # ------------------------------------------------ Chiffrement faible
+  - id: groupe8-weak-hash
+    languages: [javascript, typescript]
+    severity: ERROR
+    message: "Algorithme de hachage faible (MD5/SHA1) : utilisez bcrypt, argon2 ou scrypt pour les mots de passe."
+    metadata:
+      category: security
+      cwe: ["CWE-327: Use of a Broken or Risky Cryptographic Algorithm"]
+    patterns:
+      - pattern-either:
+          - pattern: crypto.createHash("md5")
+          - pattern: crypto.createHash("sha1")
+          - pattern: crypto.createHmac("md5", ...)
+          - pattern: crypto.createHmac("sha1", ...)
+    paths:
+      exclude:
+        - "data/**"
+        - "test/**"
+        - "**/*.spec.ts"
+
+  # --------------------------------------------- Open redirect
+  - id: groupe8-open-redirect
+    languages: [javascript, typescript]
+    severity: WARNING
+    message: "Redirection vers une URL issue de la requete sans validation : open redirect. Validez la cible (liste blanche)."
+    metadata:
+      category: security
+      cwe: ["CWE-601: URL Redirection to Untrusted Site"]
+    patterns:
+      - pattern-either:
+          - pattern: $RES.redirect($REQ.query.$X)
+          - pattern: $RES.redirect($REQ.params.$X)
+          - pattern: $RES.location = $REQ.query.$X
+    paths:
+      exclude:
+        - "data/**"
+        - "test/**"
+        - "**/*.spec.ts"
+
+  # -------------------------------------------- Command injection
+  - id: groupe8-command-injection
+    languages: [javascript, typescript]
+    severity: ERROR
+    message: "Execution de commande systeme avec une entree non validee : injection de commandes. Utilisez execFile/spawn avec une liste blanche."
+    metadata:
+      category: security
+      cwe: ["CWE-78: Improper Neutralization of Special Elements used in an OS Command"]
+      owasp: "A03:2021 - Injection"
+    patterns:
+      - pattern-either:
+          - pattern: child_process.exec(`...${...}...`)
+          - pattern: exec($A + $B, ...)
+          - pattern: execSync(`...${...}...`)
+    paths:
+      exclude:
+        - "test/**"
+        - "**/*.spec.ts"
