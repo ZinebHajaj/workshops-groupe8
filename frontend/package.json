@@ -81,7 +81,7 @@
     "stylelint-config-sass-guidelines": "^12.1.0",
     "stylelint-scss": "^6.0.0",
     "typescript-eslint": "^8.42.0",
-    "vitest": "^4.1.1"
+    "vitest": "^5.0.5"
   },
   "overrides": {
     "lru-cache@^11": "~11.2.7",
