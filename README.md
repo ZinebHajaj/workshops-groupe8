@@ -1,6 +1,6 @@
 # Workshop 2 — Sécurité du Code Source : SAST avec SonarQube & Semgrep
 
-**Groupe 8** — Zineb Hajaj · Hasna elhassani · Ouzziki Lhoussaine
+**Groupe 8** — Zineb Hajaj · Hasna elhassani · Ouzziki Lhoussaine \
 **Projet analysé :** OWASP Juice Shop (Node.js / Angular / TypeScript)
 **Dépôt :** https://github.com/ZinebHajaj/workshops-groupe8
 **Branche de rendu :** `workshop2`
