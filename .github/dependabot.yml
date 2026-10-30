@@ -1,0 +1,27 @@
+version: 2
+updates:
+  # Projet Node.js principal
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "daily"
+      time: "09:00"
+      timezone: "Africa/Casablanca"
+    open-pull-requests-limit: 5
+    versioning-strategy: "increase-if-necessary"
+    commit-message:
+      prefix: "chore(deps)"
+      include: "scope"
+
+  # Frontend Angular
+  - package-ecosystem: "npm"
+    directory: "/frontend"
+    schedule:
+      interval: "daily"
+      time: "09:15"
+      timezone: "Africa/Casablanca"
+    open-pull-requests-limit: 5
+    versioning-strategy: "increase-if-necessary"
+    commit-message:
+      prefix: "chore(deps)"
+      include: "scope"
