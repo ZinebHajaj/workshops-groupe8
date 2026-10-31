@@ -42,7 +42,7 @@
     "@ngx-translate/core": "^17.0.0",
     "@ngx-translate/http-loader": "^17.0.0",
     "@wagmi/core": "^0.5.8",
-    "angularx-qrcode": "^21.0.5",
+    "angularx-qrcode": "^22.0.1",
     "canvas-confetti": "^1.9.3",
     "codemirror": "^6.0.2",
     "cookieconsent": "^3.1.1",
