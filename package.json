@@ -157,7 +157,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@cyclonedx/cyclonedx-npm": "^2.0.0||^3.0.0||^4.00",
+    "@cyclonedx/cyclonedx-npm": "^6.0.0",
     "@eslint/js": "^9.33.0",
     "@istanbuljs/nyc-config-typescript": "^1.0.2",
     "@types/clarinet": "^0.12.3",
@@ -230,5 +230,11 @@
     "esbuild@0.28.1": true,
     "@scarf/scarf": false,
     "cypress@15.17.0": true
+  },
+  "overrides": {
+    "basic-ftp": "6.2.1",
+    "cacheable-request@2.1.4": {
+      "normalize-url": "3.3.0"
+    }
   }
 }
