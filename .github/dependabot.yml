@@ -12,6 +12,15 @@ updates:
     commit-message:
       prefix: "chore(deps)"
       include: "scope"
+    ignore:
+      # Express 4 runtime: defer the incompatible Express 5 type definitions.
+      - dependency-name: "@types/express"
+        versions:
+          - "5.x"
+      # file-type 22 is ESM-only; the application currently compiles to CommonJS.
+      - dependency-name: "file-type"
+        versions:
+          - "22.x"
 
   # Frontend Angular
   - package-ecosystem: "npm"
@@ -22,6 +31,15 @@ updates:
       timezone: "Africa/Casablanca"
     open-pull-requests-limit: 5
     versioning-strategy: "increase-if-necessary"
+    ignore:
+      # Keep the FontAwesome icon packs on their compatible version 5 set.
+      - dependency-name: "@fortawesome/free-brands-svg-icons"
+        versions:
+          - "7.x"
+      # Keep the coverage provider aligned with Vitest 4.
+      - dependency-name: "@vitest/coverage-v8"
+        versions:
+          - "5.x"
     commit-message:
       prefix: "chore(deps)"
       include: "scope"
