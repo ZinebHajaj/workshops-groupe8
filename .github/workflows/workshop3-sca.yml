@@ -2,7 +2,7 @@ name: Workshop 3 - SCA (Dependency-Check)
 
 on:
   push:
-    branches: ['workshop3*']
+    branches: ['[Ww]orkshop3*']
   workflow_dispatch:
 
 permissions:
