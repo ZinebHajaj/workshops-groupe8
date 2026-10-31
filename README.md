@@ -29,6 +29,8 @@ Une application moderne est surtout composée de bibliothèques tierces : une se
 
 Les deux sont intégrés dans un pipeline CI/CD (GitHub Actions) qui vérifie que le projet compile et bloque le pipeline quand une vulnérabilité critique est détectée. Les vulnérabilités ciblées sont ensuite corrigées, avec une comparaison avant / après.
 
+**Adaptation du sujet.** Le support mentionne Maven, mais le dépôt fourni est OWASP Juice Shop, sans `pom.xml`. L'implémentation utilise donc les manifests et lockfiles npm réels du projet ; aucun projet Maven artificiel n'a été ajouté.
+
 ## 2. Outils et environnement
 
 | Outil | Version / configuration | Rôle |
@@ -49,15 +51,17 @@ main                                          projet de base (Juice Shop)
  └── Workshop3                                LIVRABLE du workshop 3 (intégration)
       ├── workshop3-pipeline-zineb            Pipeline GitHub Actions + README
       ├── workshop3-dependabot-hasna          Dependabot (dependabot.yml, lockfile frontend)
-      └── workshop3-dependency-check-lhoussaine   Scan, corrections de versions, preuves avant/après
+      ├── workshop3-dependency-check-lhoussaine   Scan, premières corrections et preuves
+      └── workshop3-critical-remediation-lhoussaine Corrections ciblées supplémentaires
 ```
 
 | Branche | Auteur | Contenu |
 |---|---|---|
 | `Workshop3` | — | intégration : pipeline + Dependabot + corrections + README |
 | `workshop3-pipeline-zineb` | Zineb Hajaj | `.github/workflows/workshop3-sca.yml`, secret NVD, captures du pipeline |
-| `workshop3-dependabot-hasna` | Hasna elhassani | `.github/dependabot.yml`, lockfile du frontend |
-| `workshop3-dependency-check-lhoussaine` | Ouzziki Lhoussaine | corrections `pdfkit` et `express-jwt`, `docs/workshop3/` (résultats, captures, scripts) |
+| `workshop3-dependabot-hasna` | Hasna elhassani | `.github/dependabot.yml`, lockfiles et correctifs de compatibilité des mises à jour |
+| `workshop3-dependency-check-lhoussaine` | Ouzziki Lhoussaine | Corrections `pdfkit` et `express-jwt`, résultats, captures et preuves finales |
+| `workshop3-critical-remediation-lhoussaine` | Ouzziki Lhoussaine | Corrections ciblées CycloneDX, Basic-FTP et decode-uri-component, avec documentation séparée |
 
 Les branches `dependabot/npm_and_yarn/...` sont créées automatiquement par Dependabot : ce sont ses mises à jour proposées (voir section 7).
 
@@ -95,7 +99,7 @@ Fichier : `.github/workflows/workshop3-sca.yml`. Il se déclenche à chaque push
 Étapes clés
 
 1. **Build** — installation des dépendances du serveur puis du frontend, compilation du frontend (`npm run build:frontend`) puis du serveur TypeScript (`npm run build:server`). Ce job prouve que le projet compile sans erreur ; le job d'analyse ne démarre que s'il réussit.
-2. **Lockfiles** — le projet désactive les lockfiles (`package-lock=false`). Le job d'analyse en génère un pour la racine et un pour le frontend, afin que Dependency-Check connaisse les versions exactes.
+2. **Lockfiles** — `.npmrc` contient `package-lock=false`, mais des lockfiles ont aussi été générés explicitement et commités. Le job d'analyse force `package-lock=true` pour la racine et le frontend afin que Dependency-Check connaisse les versions exactes.
 3. **Dependency-Check** — l'image Docker officielle est lancée avec `--scan`, `--exclude "**/test/**"`, `--format HTML`, la clé NVD lue dans une variable d'environnement et le seuil `--failOnCVSS 9`.
 4. **Artifact** — le rapport HTML est publié par `actions/upload-artifact` avec `if: always()`.
 
@@ -115,76 +119,95 @@ Points importants
 
 ![Secret NVD_API_KEY dans les secrets du dépôt](docs/workshop3/pipeline/secrets.png)
 
-## 5. Résultats OWASP Dependency-Check (état avant)
+## 5. Résultats OWASP Dependency-Check : trois états à distinguer
 
-Rapport produit par le pipeline sur le code d'origine (avant les corrections de la section 6) : 21 dépendances analysées, 21 dépendances vulnérables, 47 vulnérabilités trouvées.
+Les rapports ne proviennent pas tous du même moment ni de la même couverture. Ils sont donc présentés comme trois états distincts plutôt que comme une seule comparaison globale.
 
-Neuf composants ont un score CVSS ≥ 9 et déclenchent le security gate :
-
-| Composant | Version | Identifiants | Score maximum |
+| État | Référence | Résultat | Utilisation |
 |---|---|---|---|
-| @cyclonedx/cyclonedx-npm | 4.2.1 | GHSA-q69g-4hcv-6jg4, GHSA-v75r-vx73-82pj | 10.0 |
-| basic-ftp | 5.3.1 | GHSA-c475-qrg2-pj4r | 10.0 |
-| crypto-js | 3.3.0 | GHSA-rg76-677x-56q9, GHSA-xwcq-pm8m-c4vf | 9.1 |
-| decode-uri-component | 0.2.2 | GHSA-qr28-fpjm-wq7f | 10.0 |
-| decompress | 4.2.1 | GHSA-hrh2-vp3x-79xf, GHSA-mp2f-45pm-3cg9 | 9.1 |
-| jsonwebtoken | 0.4.0 | GHSA-c7hr-j4mj-j2w6 | 10.0 |
-| lodash | 2.4.2 | GHSA-4xc9-xhrj-v574, GHSA-jf85-cpcp-j695 | 10.0 |
-| marsdb | 0.6.11 | GHSA-5mrr-rgp6-x4gr | 10.0 |
-| minimatch | 3.0.5 | GHSA-3ppc-4f35-3m26 | 10.0 |
+| Baseline locale initiale | `reports/before/` | 46 findings NPM, dont CryptoJS et Express-JWT | Corrections PDFKit et Express-JWT |
+| Rapport CI de référence fourni | Généré le 2026-10-31 à 13:27:17 GMT, Dependency-Check 13.0.0 | 21 dépendances analysées et vulnérables, 47 findings, 0 suppression | Référence pour les trois corrections ciblées suivantes |
+| Run intégré de vérification | [Run #14](https://github.com/ZinebHajaj/workshops-groupe8/actions/runs/41216021010), commit `97ad343`, rapport généré à 15:48:55 GMT | 18 dépendances analysées et vulnérables, 42 findings, 0 suppression | Vérification intégrée et statut final du gate |
+
+Le HTML de référence ne contient pas d'identifiant de commit : il n'est pas associé arbitrairement à un run. Le run #14 est en revanche relié explicitement à `Workshop3`, au commit `97ad343` et à l'artifact `dependency-check-report`.
+
+**Lecture honnête.** Les chiffres peuvent varier avec les lockfiles, la couverture des analyseurs et les bases d'advisories. Une différence de totaux n'est interprétée qu'après une comparaison normalisée par dépendance et advisory.
 
 ![Message du security gate dans le log](docs/workshop3/pipeline/gate.png)
 
 ![Rapport Dependency-Check : résumé des dépendances vulnérables](docs/workshop3/pipeline/rapport-avant.png)
 
-**Lecture honnête.** Les chiffres varient légèrement d'une exécution à l'autre (46 puis 47 vulnérabilités, 8 puis 9 composants ≥ 9) : les advisories interrogées par Node Audit évoluent dans le temps. Les identifiants sont de type GHSA : ces résultats viennent surtout de l'analyseur Node Audit, et non de la correspondance NVD classique (l'analyse NVD du pipeline ne remonte rien sur les paquets npm).
-
 ## 6. Corrections et comparaison avant / après
 
-Les corrections sont de **Ouzziki Lhoussaine** ; le détail complet est dans `docs/workshop3/dependency-check/resultats.md`.
+Les corrections sont de **Ouzziki Lhoussaine**. Les preuves détaillées sont dans `docs/workshop3/dependency-check/resultats.md` et `docs/workshop3/critical-remediation/`.
 
-### 6.1 Corrections appliquées
+### 6.1 Première étape : PDFKit/CryptoJS et Express-JWT
 
-| # | Dépendance | Avant | Après | Commit |
+| Dépendance | Avant | Après | Commit |
+|---|---|---|---|
+| `pdfkit` (qui amenait `crypto-js@3.3.0`) | 0.11.0 | 0.20.2 | `a1c15a5` |
+| `express-jwt` | 0.1.3 | 6.0.0 | `c60aca3` |
+
+- `pdfkit@0.20.2` ne dépend plus de `crypto-js` ; la mise à jour du parent supprime la dépendance vulnérable sans l'ajouter comme dépendance directe.
+- `express-jwt@6.0.0` utilise `algorithms: ['RS256']` dans `isAuthorized` et `algorithms: ['HS256']` dans `denyAll`. Les casts `as any` qui masquaient les options obligatoires ont été supprimés.
+- Builds frontend et serveur réussis ; 10 tests `order` et 54 tests `insecurity` réussis.
+
+Les trois findings ciblés — deux CryptoJS et un Express-JWT — sont présents dans l'extraction initiale et absents de l'extraction locale après correction. Un npm audit indépendant confirme également leur absence.
+
+### 6.2 Deuxième étape : trois corrections ciblées supplémentaires
+
+| Correction | Avant | Après | Code | Documentation |
 |---|---|---|---|---|
-| 1 | `pdfkit` (qui amenait `crypto-js@3.3.0`) | 0.11.0 | 0.20.2 | `a1c15a5` |
-| 2 | `express-jwt` | 0.1.3 | 6.0.0 | `c60aca3` |
+| CycloneDX npm | `@cyclonedx/cyclonedx-npm@4.2.1` | `6.0.0` | `c099896` | `2ba3ab1` |
+| Basic-FTP, dépendance transitive | `5.3.1` | Override exact `6.2.1` | `84e0890` | `bd04da0` |
+| decode-uri-component, dépendance transitive | `0.2.2` via `query-string@5.1.1` | Suppression de cette chaîne par override de `normalize-url` vers `3.3.0`, limité à `cacheable-request@2.1.4` | `ab8c121` | `5387f88` |
 
-- **Correction 1** : `pdfkit@0.20.2` ne dépend plus de `crypto-js`. Mettre à jour le parent supprime la dépendance vulnérable sans l'ajouter comme dépendance directe. Résultat : `crypto-js` est absent du lockfile et de `npm ls`.
-- **Correction 2** : passage à `express-jwt@6.0.0`, avec `algorithms: ['RS256']` dans `isAuthorized`, `algorithms: ['HS256']` dans `denyAll`, et suppression des casts `as any` qui masquaient les options devenues obligatoires.
+Points de compatibilité vérifiés :
 
-| Vérification | Résultat |
+- CycloneDX : builds et génération SBOM validés.
+- Basic-FTP : chaîne `proxy-agent → pac-proxy-agent → get-uri`, import, 55 tests et builds validés.
+- decode-uri-component : l'override direct vers `0.5.1` a été écarté car `query-string@5.1.1` utilise CommonJS alors que `0.5.1` est ESM-only. Le téléchargement réel, le cache, les 55 tests et les builds ont été validés avec le parent remplacé.
+
+### 6.3 Résultat intégré du run #14
+
+Le [run intégré #14](https://github.com/ZinebHajaj/workshops-groupe8/actions/runs/41216021010) donne le résultat suivant :
+
+- job `build` : **réussi** ;
+- analyse Dependency-Check : **terminée** ;
+- rapport HTML : **généré et publié en artifact** ;
+- security gate : **échec avec le code 15**, car des findings CVSS ≥ 9 subsistent ;
+- suppressions : **0**.
+
+La comparaison normalisée entre le rapport CI de référence et celui du run #14 montre :
+
+| Entrée de la référence | Advisories ciblées | Dans le rapport du run #14 |
+|---|---|---|
+| `@cyclonedx/cyclonedx-npm:4.2.1` | `GHSA-q69g-4hcv-6jg4`, `GHSA-v75r-vx73-82pj` | Entrée et deux advisories absentes |
+| `basic-ftp:5.3.1` | `GHSA-c475-qrg2-pj4r` | Entrée et advisory absentes |
+| `decode-uri-component:0.2.2` | `GHSA-qr28-fpjm-wq7f`, `GHSA-vcc3-ghjq-m6fr` | Entrée et deux advisories absentes |
+
+Aucune nouvelle section de dépendance n'est apparue et les ensembles d'advisories des 18 autres dépendances partagées sont inchangés. Cela vérifie les cinq findings ciblés dans le périmètre du scan CI, sans déclarer un projet sans vulnérabilité ni une réduction globale du risque.
+
+### 6.4 Pourquoi le gate final reste rouge
+
+| Composant | Advisories visibles dans le log du gate |
 |---|---|
-| Build frontend et serveur TypeScript | Réussis |
-| `test/server/order.unit.test.ts` | 10 réussis, 0 échoué |
-| `insecurity.unit.test.ts` | 54 réussis, 0 échoué |
+| `decompress@4.2.1` | `GHSA-hrh2-vp3x-79xf`, `GHSA-mp2f-45pm-3cg9` |
+| `jsonwebtoken@0.4.0` | `GHSA-c7hr-j4mj-j2w6` |
+| `lodash@2.4.2` | `GHSA-4xc9-xhrj-v574`, `GHSA-jf85-cpcp-j695` |
+| `marsdb@0.6.11` | `GHSA-5mrr-rgp6-x4gr` |
+| `minimatch@3.0.5` | `GHSA-3ppc-4f35-3m26` |
 
-### 6.2 Résultat ciblé
+Ces composants n'ont pas été déclarés corrigés. Les 42 findings restants sont conservés dans le rapport final et les décisions de remédiation ultérieures restent séparées.
 
-| Dépendance avant | Advisory | Sévérité | Correction | Après |
-|---|---|---|---|---|
-| `crypto-js@3.3.0` via `pdfkit@0.11.0` | GHSA-xwcq-pm8m-c4vf | Critical 9.1 | PDFKit 0.20.2 | Absente |
-| `crypto-js@3.3.0` via `pdfkit@0.11.0` | GHSA-rg76-677x-56q9 | Critical 9.0 | PDFKit 0.20.2 | Absente |
-| `express-jwt@0.1.3` | GHSA-6g6m-m6h5-w9gf | High 7.7 | Express-JWT 6.0.0 | Absente |
+### 6.5 Limites des comparaisons
 
-Les trois findings sont présents dans l'extraction « avant » et absents de l'extraction « après ». Un `npm audit --package-lock-only --json` indépendant confirme l'absence des trois advisories.
+- Pour PDFKit/Express-JWT, l'extraction locale contient 46 findings avant et 68 après, mais la couverture change : NPM seul avant, puis NPM et NVD avec une base locale. La comparaison normalisée identifie exactement trois couples ciblés supprimés ; les lignes supplémentaires ne prouvent pas une régression introduite par les commits.
+- Le scan local après utilise `--noupdate`, `--network host` et `--disableNodeAuditCache` après des échecs répétés de mise à jour NVD. Cette limite est documentée et n'est pas présentée comme équivalente à une mise à jour réussie.
+- Pour le run #14, les dates de dernière modification NVD diffèrent de celles du rapport de référence. La comparaison porte donc sur les dépendances et advisories, pas seulement sur les totaux.
+- Les rapports CI ont une couverture limitée et ne doivent pas être comparés directement à des scans locaux plus larges ou aux totaux de npm audit.
 
-### 6.3 Lecture correcte des totaux
-
-| Extraction | NPM | NVD | Total |
-|---|---:|---:|---:|
-| Avant | 46 | 0 | 46 |
-| Après | 45 | 23 | 68 |
-
-Le total « après » est plus élevé, mais ce n'est pas une régression : la couverture n'est pas la même (analyse npm seule avant ; npm et NVD après, avec une base NVD locale). Une comparaison normalisée par `package:version + advisory/CVE` donne **3 couples supprimés** (exactement les trois findings ciblés) et 25 couples supplémentaires (23 NVD, 2 NPM), à trier. Ils ne prouvent pas que les corrections aient introduit de nouvelles vulnérabilités.
-
-### 6.4 Limites
-
-- Le scan « après » a été exécuté **en local** avec la même image Docker et les mêmes manifests, avec `--noupdate`, `--network host` et `--disableNodeAuditCache`, car la mise à jour de la base NVD échouait à plusieurs reprises. Le pipeline exécuté sur `Workshop3` (onglet *Actions*) complète cette preuve.
-- Les autres composants à score ≥ 9 de la section 5 (`lodash`, `jsonwebtoken`, `marsdb`, `minimatch`, `basic-ftp`, `decompress`, `decode-uri-component`, `@cyclonedx/cyclonedx-npm`) ne sont **pas** déclarés corrigés : le gate continue donc de bloquer, ce qui est son rôle.
-- `jsonwebtoken@0.4.0` reste une dépendance directe à traiter ; `express-jwt@6.0.0` introduit `jsonwebtoken@8.5.1`, dont les CVE nécessitent un tri distinct.
-
-### 6.5 Captures
+### 6.6 Captures
 
 ![Résumé du rapport avant correction](docs/workshop3/screenshots/dependency-check-01-avant-resume.png)
 
@@ -194,9 +217,11 @@ Le total « après » est plus élevé, mais ce n'est pas une régression : la c
 
 ![Résumé du rapport après correction](docs/workshop3/screenshots/dependency-check-04-apres-resume.png)
 
-![Comparaison ciblée : trois findings présents avant, absents après](docs/workshop3/screenshots/dependency-check-05-apres-detail.png)
+![Comparaison ciblée initiale](docs/workshop3/screenshots/dependency-check-05-apres-detail.png)
 
-![Versions après : pdfkit 0.20.2, express-jwt 6.0.0, pas de CryptoJS](docs/workshop3/screenshots/dependency-check-07-versions-apres.png)
+![Run intégré #14 : build vert, gate Dependency-Check rouge et artifact](docs/workshop3/screenshots/dependency-check-06-build.png)
+
+![Versions après PDFKit et Express-JWT](docs/workshop3/screenshots/dependency-check-07-versions-apres.png)
 
 ## 7. Dependabot
 
@@ -205,60 +230,57 @@ Configuration (`.github/dependabot.yml`), réalisée par **Hasna elhassani** :
 | Paramètre | Valeur |
 |---|---|
 | Écosystème | `npm` |
-| Dossiers surveillés | `/` (serveur) et `/frontend` (Angular) |
-| Fréquence | tous les jours (09:00 et 09:15, fuseau Africa/Casablanca) |
-| Pull requests ouvertes en même temps | 5 maximum par dossier |
-| Stratégie de version | `increase-if-necessary` |
-| Messages de commit | préfixe `chore(deps)` avec le nom du paquet |
+| Dossiers surveillés | `/` et `/frontend` |
+| Fréquence | Quotidienne à 09:00 et 09:15, fuseau `Africa/Casablanca` |
+| Pull requests ouvertes simultanément | 5 maximum par dossier |
+| Stratégie | `increase-if-necessary` |
+| Messages de commit | Préfixe `chore(deps)` avec le nom du paquet |
 
-Dependabot propose deux mécanismes : les **alertes** (détection de vulnérabilités connues) et les **version updates** (mises à jour automatiques), configurées par ce fichier. Dès l'activation, il a ouvert des branches de mise à jour :
+Dependabot distingue les **alertes de sécurité** et les **version updates**. Les branches `dependabot/npm_and_yarn/...` observées proposent notamment des mises à jour d'Express Rate Limit, File-Type, des types Express, d'AngularX QRCode, de FontAwesome, de Stylelint et de Vitest. Une mise à jour proposée n'est pas nécessairement compatible ni liée à un finding du gate.
 
-| Paquet | Version proposée | Dossier |
+### 7.1 Décisions de compatibilité et mises à jour différées
+
+Les correctifs techniques et les règles suivantes ont été intégrés dans `Workshop3` par la PR #33 :
+
+| Dépendance | Décision documentée | Justification |
 |---|---|---|
-| express-rate-limit | 8.7.1 | racine |
-| express-robots-txt | 1.0.0 | racine |
-| file-type | 22.2.0 | racine |
-| neostandard | 0.14.1 | racine |
-| @types/express | 5.0.6 | racine |
-| angularx-qrcode | 22.0.1 | frontend |
-| @fortawesome/free-brands-svg-icons | 7.3.1 | frontend |
-| stylelint-config-sass-guidelines | 13.0.0 | frontend |
-| @vitest/coverage-v8 | 5.0.5 | frontend |
+| Racine : `@types/express` `5.x` | Ignorée | Les types Express 5 ne correspondent pas au runtime Express 4 |
+| Racine : `file-type` `22.x` | Ignorée | Version ESM-only alors que la compilation actuelle est CommonJS |
+| Frontend : `@fortawesome/free-brands-svg-icons` `7.x` | Ignorée | Conservation d'un ensemble d'icônes compatible avec les autres paquets FontAwesome 5 |
+| Frontend : `@vitest/coverage-v8` `5.x` | Ignorée | Alignement du fournisseur de couverture sur Vitest 4 |
 
-Une autre pull request, `vitest` 4.1.12 vers 5.0.5 (PR n°21), a été fusionnée dans `main`.
+Ces règles sont volontairement ciblées, sans exclusion générale des mises à jour.
 
-**Lecture critique.** Ces pull requests sont des mises à jour de version : parmi celles observées, aucune ne concerne les composants critiques du gate (section 5). Dependabot maintient le projet à jour, mais il ne remplace pas une analyse de sécurité avec un seuil bloquant. Chaque mise à jour doit aussi passer par le build avant d'être fusionnée.
+**Limite opérationnelle importante.** La branche par défaut du dépôt est `main`, et GitHub lit la configuration des version updates sur la branche par défaut. La configuration de `main` ne contient pas ces quatre règles `ignore`. Elles sont donc présentées ici comme des décisions documentées sur la branche de rendu, et non comme des règles prétendument actives sur le Dependabot de `main`. La politique du groupe conserve le rendu sur `Workshop3`.
 
 ## 8. Comparaison Dependabot vs Dependency-Check
 
 | Critère | Dependabot | OWASP Dependency-Check |
 |---|---|---|
-| Nature | Service intégré à GitHub | Outil open source OWASP (CLI / Docker) |
-| Rôle | **Corriger** : propose les mises à jour | **Détecter** : liste les dépendances vulnérables |
-| Résultat | Pull requests de mise à jour | Rapport HTML + code de sortie utilisable comme gate |
-| Sources de données | GitHub Advisory Database | NVD, plus les advisories npm (Node Audit) |
-| Déclenchement | Planifié (quotidien ici) | À chaque push, dans le pipeline |
-| Installation | Un fichier `dependabot.yml` | Image Docker, clé NVD, lockfiles |
-| Durée | Quelques secondes par mise à jour | 30 minutes à plus d'1 h (téléchargement de la base NVD) |
-| Blocage du pipeline | Non | Oui (`--failOnCVSS`) |
-| Limites | Les mises à jour peuvent casser le build ; ne cible pas forcément les vulnérabilités | Faux positifs possibles, dépend de la disponibilité de la NVD, lent |
-| Cas d'usage idéal | Maintenir les dépendances à jour en continu | Auditer et bloquer un état dangereux avant le déploiement |
+| Nature | Service intégré à GitHub | Outil open source OWASP, CLI/Docker |
+| Rôle principal | Proposer des mises à jour et signaler des alertes | Détecter et rapporter les dépendances vulnérables |
+| Résultat | Pull requests | Rapport HTML et code de sortie |
+| Sources | GitHub Advisory Database | NVD et advisories npm via Node Audit |
+| Déclenchement | Planifié ou selon les alertes | À chaque push dans ce pipeline |
+| Blocage du pipeline | Pas automatiquement dans cette configuration | Oui, avec `--failOnCVSS 9` |
+| Limites | Mises à jour parfois incompatibles ; ne cible pas forcément les findings du gate | Faux positifs/négatifs possibles, couverture variable, dépendance aux bases et à leur disponibilité |
+| Durée | Quelques secondes pour ouvrir une proposition | Variable selon la base NVD ; environ 6 minutes pour le job du run #14, mais davantage possible lors des téléchargements initiaux |
 
-**Complémentarité.** Dependency-Check dit *ce qui est dangereux* et bloque le pipeline ; Dependabot propose *comment avancer* en ouvrant les mises à jour. Sur ce projet, Dependency-Check a désigné `crypto-js@3.3.0` et `express-jwt@0.1.3` ; la correction a été faite à la main en mettant à jour le parent (`pdfkit`) puis `express-jwt`. D'où l'usage des deux outils ensemble, chacun avec son rôle.
+**Complémentarité.** Dependency-Check fournit un constat et un gate ; Dependabot automatise des propositions de mise à jour. Dans les deux cas, la compatibilité doit être prouvée par le graphe de dépendances, les builds et les tests. Les corrections critiques de ce rendu ont été examinées individuellement plutôt que fusionnées automatiquement.
 
 ## 9. Difficultés rencontrées et limites
 
-| Problème | Cause | Solution |
-|---|---|---|
-| `npm install` du frontend échoue : `Cannot read properties of null (reading 'edgesOut')` | Erreur interne de npm pendant la résolution des dépendances peer, reproduite aussi en local | `npm install --legacy-peer-deps` |
-| `Invalid API Key` lors de la mise à jour de la NVD | Clé NVD non activée (lien d'activation par e-mail) | Activation, test de la clé (réponse HTTP 200), mise à jour du secret |
-| Premier rapport peu fiable | L'action officielle ajoute `--noupdate` et reçoit les arguments en une seule chaîne | Lancement direct de l'image Docker, avec mise à jour de la base |
-| Erreurs d'archives pendant l'analyse | ZIP d'exploit volontaires dans `test/files` (Juice Shop) | `--exclude "**/test/**"` |
-| Warnings sur `node_modules` et formats CVSS | Analyse basée sur les lockfiles, vecteurs CVSS non reconnus | Non bloquant, conservés dans les journaux |
-| Job très long | Téléchargement de plus de 416 000 enregistrements NVD : de 30 minutes à plus d'1 h | Accepté pour le workshop ; le cache ne se sauvegarde qu'après un job réussi |
-| Mise à jour NVD en échec côté scan « après » | Indisponibilité répétée de la base | Scan avec la base locale (`--noupdate`), limites documentées en 6.4 |
-| Totaux avant / après non comparables (46 puis 68) | Couverture différente (npm seul, puis npm et NVD) | Comparaison normalisée par `package:version + advisory/CVE` |
-| Pipeline rouge dès le premier run | Le projet contient volontairement des dépendances critiques | C'est le rôle du gate ; il ne passera au vert qu'après correction des composants de la section 5 |
+| Problème | Traitement retenu |
+|---|---|
+| Résolution peer du frontend | `--legacy-peer-deps`, limité au frontend et documenté |
+| Conflit Stylelint 16 / `stylelint-config-sass-guidelines@13` qui attend Stylelint 17 | Conflit préexistant conservé comme limite ; aucune modification sans rapport dans les commits de remédiation |
+| Clé NVD initialement invalide | Activation de la clé et mise à jour du secret, sans la committer |
+| Premier rapport peu fiable avec l'action officielle | Lancement direct de l'image Docker avec mise à jour de la base |
+| Archives volontairement dangereuses dans les tests Juice Shop | Exclusion de `**/test/**` |
+| Échecs répétés de mise à jour NVD en local | Réutilisation de la base locale avec `--noupdate` et limitation explicitée |
+| Totaux avant/après différents | Comparaison normalisée par dépendance et advisory plutôt que lecture isolée des totaux |
+| Gate rouge | Conservé : aucun abaissement du seuil, suppression générale ou `continue-on-error` |
+| Artifact présent malgré le job rouge | Normal avec `if: always()` ; l'artifact ne prouve pas que le gate a réussi |
 
 ## 10. Reproduire en local
 
@@ -267,17 +289,18 @@ git clone https://github.com/ZinebHajaj/workshops-groupe8.git
 cd workshops-groupe8
 git checkout Workshop3
 
-# 1) Build (Node 22)
-npm install --ignore-scripts
-(cd frontend && npm install --legacy-peer-deps)
+# 1) Installation propre et builds (Node 22)
+npm ci --ignore-scripts
+npm rebuild esbuild sqlite3
+npm --prefix frontend ci --legacy-peer-deps
 npm run build:frontend
 npm run build:server
 
-# 2) Lockfiles
+# 2) Lockfiles pour l'analyse, comme dans le workflow
 npm install --package-lock-only --package-lock=true --ignore-scripts
 (cd frontend && npm install --package-lock-only --package-lock=true --ignore-scripts --legacy-peer-deps)
 
-# 3) OWASP Dependency-Check (clé NVD dans la variable NVD_API_KEY)
+# 3) Dependency-Check avec la clé NVD dans l'environnement
 mkdir -p odc-data reports
 docker run --rm -u "$(id -u):$(id -g)" \
   -v "$PWD":/src \
@@ -288,24 +311,24 @@ docker run --rm -u "$(id -u):$(id -g)" \
   --project workshops-groupe8 --format HTML --out /report \
   --nvdApiKey "$NVD_API_KEY" --failOnCVSS 9
 
-# 4) Contrôle indépendant avec npm
+# 4) Contrôle complémentaire
 npm audit --package-lock-only
 ```
 
-Pour Dependabot : le fichier `.github/dependabot.yml` suffit ; les pull requests apparaissent ensuite dans l'onglet *Pull requests*.
+Pour une comparaison locale strictement reproductible, consigner le digest de l'image et réutiliser exactement la même image. Le digest consigné pour les scans locaux du groupe est `sha256:0e8f69ad5b00d62000937f4e57189812343f6903d9c83ee712012d51542a020a`. Le statut de la commande Docker doit être conservé même si le rapport est généré : un code 15 représente le gate, pas une absence de rapport.
 
 ## 11. Conclusion
 
-Une analyse de dépendances n'a de valeur que si elle bloque quelque chose. Le pipeline compile le projet, analyse ses dépendances à chaque push, conserve le rapport en artifact et fait échouer le build dès qu'un composant atteint un score CVSS de 9. Ici, neuf composants critiques sont détectés : sans gate, ces résultats resteraient dans un rapport que personne n'ouvre.
+Le pipeline compile le projet, exécute Dependency-Check, publie le rapport et applique réellement le seuil CVSS 9. Les comparaisons ciblées valident d'abord les corrections de PDFKit/CryptoJS et Express-JWT, puis celles de CycloneDX, Basic-FTP et decode-uri-component. Dans la comparaison CI normalisée du run #14, les trois entrées correspondant à ces dernières corrections et leurs cinq advisories ne sont plus rapportées, sans modification des advisories des 18 autres dépendances partagées.
 
-Le workshop montre aussi que les deux outils se complètent : Dependency-Check détecte et bloque, Dependabot propose les mises à jour en continu. Trois findings ciblés ont été corrigés et vérifiés (`crypto-js` via `pdfkit`, et `express-jwt`) ; les autres, notamment la dette autour de `jsonwebtoken`, restent ouverts et documentés. La principale limite est la durée de l'analyse, due au téléchargement de la base NVD : un cache fiable de cette base est la première amélioration à apporter.
+Le gate reste néanmoins rouge avec le code 15 en raison de `decompress`, `jsonwebtoken`, `lodash`, `marsdb` et `minimatch`. Le rapport final contient encore 42 findings : le groupe ne déclare ni un projet sans vulnérabilité, ni une réduction globale du risque, ni un pipeline vert. Dependency-Check et Dependabot sont complémentaires, mais chaque correction doit rester compatible, mesurable et honnêtement documentée.
 
 ## 12. Répartition du travail
 
 | Membre | Tâche |
 |---|---|
-| Zineb Hajaj | Pipeline GitHub Actions (build, Dependency-Check, security gate, artifact du rapport), clé NVD dans les secrets, intégration dans `Workshop3`, README final |
-| Hasna elhassani | Dependabot : `dependabot.yml`, lockfile du frontend, pull requests automatiques |
-| Ouzziki Lhoussaine | Scan Dependency-Check, rapport HTML, corrections `pdfkit` et `express-jwt`, comparaison avant / après, captures et scripts de preuve |
+| Zineb Hajaj | Pipeline GitHub Actions, build, Dependency-Check, security gate, artifact, clé NVD dans les secrets, intégration dans `Workshop3`, README final |
+| Hasna elhassani | Dependabot, lockfiles et correctifs de compatibilité, décisions ciblées de mises à jour différées et documentation associée |
+| Ouzziki Lhoussaine | Scans Dependency-Check, corrections PDFKit/Express-JWT puis CycloneDX/Basic-FTP/decode-uri-component, tests et builds, comparaisons normalisées, run intégré #14, artifact et captures 01 à 07 |
 
-La comparaison Dependabot / Dependency-Check (section 8) a été rédigée à partir du cours et des résultats du groupe.
+La comparaison Dependabot / Dependency-Check a été rédigée à partir du cours et des résultats vérifiables du groupe.
