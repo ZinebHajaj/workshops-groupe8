@@ -31,6 +31,15 @@ updates:
       timezone: "Africa/Casablanca"
     open-pull-requests-limit: 5
     versioning-strategy: "increase-if-necessary"
+    ignore:
+      # Keep the FontAwesome icon packs on their compatible version 5 set.
+      - dependency-name: "@fortawesome/free-brands-svg-icons"
+        versions:
+          - "7.x"
+      # Keep the coverage provider aligned with Vitest 4.
+      - dependency-name: "@vitest/coverage-v8"
+        versions:
+          - "5.x"
     commit-message:
       prefix: "chore(deps)"
       include: "scope"
