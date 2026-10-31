@@ -232,6 +232,9 @@
     "cypress@15.17.0": true
   },
   "overrides": {
-    "basic-ftp": "6.2.1"
+    "basic-ftp": "6.2.1",
+    "cacheable-request@2.1.4": {
+      "normalize-url": "3.3.0"
+    }
   }
 }
