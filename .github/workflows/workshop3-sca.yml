@@ -1,0 +1,85 @@
+name: Workshop 3 - SCA (Dependency-Check)
+
+on:
+  push:
+    branches: ['[Ww]orkshop3*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Installer les dépendances du serveur
+        run: npm install --ignore-scripts
+
+      - name: Installer les dépendances du frontend
+        working-directory: frontend
+        run: npm install --legacy-peer-deps   # contournement du bug npm (peer deps)
+
+      - name: Compiler le frontend
+        run: npm run build:frontend
+
+      - name: Compiler le serveur (TypeScript)
+        run: npm run build:server
+
+  dependency-check:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Préparer les lockfiles (versions exactes des dépendances)
+        run: |
+          npm install --package-lock-only --package-lock=true --ignore-scripts
+          (cd frontend && npm install --package-lock-only --package-lock=true --ignore-scripts --legacy-peer-deps)
+          ls -l package-lock.json frontend/package-lock.json
+
+      - name: Cache de la base NVD
+        uses: actions/cache@v4
+        with:
+          path: odc-data
+          key: odc-data-${{ github.run_id }}
+          restore-keys: odc-data-
+
+      - name: OWASP Dependency-Check
+        env:
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+        run: |
+          mkdir -p odc-data reports
+          docker run --rm \
+            -u "$(id -u):$(id -g)" \
+            -v "$PWD":/src \
+            -v "$PWD/odc-data":/usr/share/dependency-check/data \
+            -v "$PWD/reports":/report \
+            owasp/dependency-check:latest \
+            --scan /src \
+            --exclude "**/test/**" \
+            --project workshops-groupe8 \
+            --format HTML \
+            --out /report \
+            --nvdApiKey "$NVD_API_KEY" \
+            --failOnCVSS 9
+
+      - name: Upload du rapport
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-check-report
+          path: reports/
