@@ -1,0 +1,19 @@
+PERIMETRE DU SCAN ACTIF - WORKSHOP 4 (OWASP ZAP)
+
+Responsable du scan : Zineb Hajaj (Groupe 8)
+Cours               : DevSecOps - Master DCC, Faculte Polydisciplinaire de Larache
+Cible               : http://juice-shop-zineb:3000 (reseau Docker prive zap-net)
+Acces depuis l'hote : http://127.0.0.1:3000
+Description cible   : OWASP Juice Shop, application de test volontairement vulnerable
+Proprietaire        : moi-meme, instance lancee sur mon PC portable personnel
+Autorisation        : accord de l'equipe Groupe 8 (repartition : Lhoussaine = scan passif,
+                      Zineb = scan actif, Hasna = CI/CD) pour le Workshop 4, le 2026-11-01
+Type de scan        : ACTIF (zap-full-scan.py), sur une cible locale uniquement
+Chemins inclus      : tout http://juice-shop-zineb:3000/*
+Chemins exclus      : /logout, /socket.io/*
+Plage horaire       : voir debut_utc et fin_utc en bas du fichier
+Donnees de test     : comptes fictifs uniquement, aucun identifiant reel
+Hors perimetre      : aucun site public, aucun domaine tiers, aucun service de l'ecole,
+                      pas GitHub, pas de production
+debut_utc=2026-11-01T01:22:02Z
+fin_utc=2026-11-01T01:36:31Z
