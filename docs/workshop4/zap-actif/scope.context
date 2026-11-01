@@ -1,0 +1,10 @@
+<configuration>
+  <context>
+    <name>juice-shop-local-autorise</name>
+    <desc>Perimetre du scan actif Workshop 4 - Juice Shop local uniquement</desc>
+    <inscope>true</inscope>
+    <incregexes>http://juice-shop-zineb:3000.*</incregexes>
+    <excregexes>.*logout.*</excregexes>
+    <excregexes>.*socket\.io.*</excregexes>
+  </context>
+</configuration>
