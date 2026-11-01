@@ -1,0 +1,7 @@
+[CIBLE] bkimminich/juice-shop:latest
+  digest  = bkimminich/juice-shop@sha256:42843723a7bf4246aa5d63c324978b17ef296ac78434aeddd34c427bfb5853f4
+  created = 2026-10-12T14:53:52.591317154Z
+  version = 20.3.0
+[SCANNER] ghcr.io/zaproxy/zaproxy:stable
+  digest  = ghcr.io/zaproxy/zaproxy@sha256:030d3df57735dacbb83464854758e674dd9ad01d79d12a129a8e58b1fd384238
+  created = 2026-10-26T13:34:27.987555755Z
