@@ -1,0 +1,4 @@
+# Preuve de disponibilité — 2026-10-31T18:15:35Z
+conteneur : juice-shop-groupe8 (bkimminich/juice-shop:latest)
+host_http          = 200
+from_container_http = 200

@@ -1,0 +1,10 @@
+# Extrait verbatim — 31/10/2026, machine de Lhoussaine
+# docker build -t juice-shop-groupe8:5dc18a6 .
+npm error code ERESOLVE
+npm error While resolving: frontend@20.3.0
+npm error Found: vitest@5.0.5
+npm error   dev vitest@"^5.0.5" from the root project
+npm error Could not resolve dependency:
+npm error peer vitest@"4.1.12" from @vitest/coverage-v8@4.1.12
+Dockerfile:5  >>> RUN npm install --omit=dev
+ERROR: failed to build: ... exit code: 1
