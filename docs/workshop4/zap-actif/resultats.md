@@ -55,3 +55,17 @@ Voir correlation.md.
 - 50 % des réponses lentes pendant le scan (rapport ZAP).
 - Les alertes non rejouées à la main ne sont pas confirmées.
 - Un scan actif ne doit viser qu'une instance de test locale ou pré-production, jamais la production.
+
+## Comparaison avec le scan passif (Lhoussaine)
+Comparaison des noms d'alertes entre zap-baseline.json (branche workshop4-zap-passif-lhoussaine) et zap-actif.json :
+
+| | Passif | Actif |
+|---|---|---|
+| URLs explorées | 116 | 155 |
+| Alertes | 16 | 19 |
+| Medium | 2 | 5 |
+
+- Seulement dans l'actif (4) : Backup File Disclosure, Bypassing 403, CORS Misconfiguration (trois Medium confirmés par rejeu manuel) et User Agent Fuzzer (informatif). Le scan actif envoie des requêtes construites (noms de fichiers de sauvegarde, variantes de chemin, en-tête Origin, User-Agent), ce que le scan passif ne fait pas.
+- Seulement dans le passif (1) : Non-Storable Content (informatif). Les deux scans n'ont pas exploré exactement les mêmes URLs.
+- Les 15 autres alertes sont communes aux deux scans.
+- Aucun des deux scans n'a détecté de XSS ni d'injection.
