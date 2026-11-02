@@ -181,12 +181,12 @@ Les six captures sont dans [`screenshots/`](screenshots/). Chacune répond à un
 
 | Capture | Ce qu'elle montre | Ce qu'elle prouve |
 |---|---|---|
-| [`01-identite`](screenshots/trivy-01-identite.png) | `trivy --version` + `docker images --digests` | Trivy 0.75.0, digest `42843723…5853f4` |
-| [`02-scan-execution`](screenshots/trivy-02-scan-execution.png) | début du journal de scan | Debian 13.7, `pkg_num=14`, scan mené à son terme |
-| [`03-vulns-tableau`](screenshots/trivy-03-vulns-tableau.png) | 20 lignes des 43 alertes | sévérité, CVE, paquet, installée, corrigée |
-| [`04-compteurs`](screenshots/trivy-04-compteurs.png) | `cat 06-compteurs.txt` | 60 / 32 / 11 / 11 / 1, puis 43 et 40 |
-| [`05-secret`](screenshots/trivy-05-secret.png) | liste des constats de secrets | 3 × `AsymmetricPrivateKey`, 2 × `JWT` |
-| [`06-misconfig`](screenshots/trivy-06-misconfig.png) | récapitulatif par fichier | `Dockerfile` à **0** face aux 42 alertes d'infra |
+| [`01-identite`](docs/workshop5/screenshots/trivy-01-identite.png) | `trivy --version` + `docker images --digests` | Trivy 0.75.0, digest `42843723…5853f4` |
+| [`02-scan-execution`](docs/workshop5/screenshots/trivy-02-scan-execution.png) | début du journal de scan | Debian 13.7, `pkg_num=14`, scan mené à son terme |
+| [`03-vulns-tableau`](docs/workshop5/screenshots/trivy-03-vulns-tableau.png) | 20 lignes des 43 alertes | sévérité, CVE, paquet, installée, corrigée |
+| [`04-compteurs`](docs/workshop5/screenshots/trivy-04-compteurs.png) | `cat 06-compteurs.txt` | 60 / 32 / 11 / 11 / 1, puis 43 et 40 |
+| [`05-secret`](docs/workshop5/screenshots/trivy-05-secret.png) | liste des constats de secrets | 3 × `AsymmetricPrivateKey`, 2 × `JWT` |
+| [`06-misconfig`](docs/workshop5/screenshots/trivy-06-misconfig.png) | récapitulatif par fichier | `Dockerfile` à **0** face aux 42 alertes d'infra |
 
 ---
 
