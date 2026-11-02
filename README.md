@@ -338,4 +338,3 @@ workflow existera.
 3. **Une branche par membre**, une branche d'assemblage ; pas de force-push, pas de fusion dans `main`.
 4. **Cibles autorisées uniquement** : images construites par le groupe ou explicitement fournies par l'atelier.
 5. **Une remédiation se mesure** : jamais de « corrigé » sans second scan.
-
