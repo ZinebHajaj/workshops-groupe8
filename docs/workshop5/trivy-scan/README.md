@@ -103,27 +103,52 @@ La liste complète des 115 lignes est dans `06-inventaire.tsv` (calculée depuis
 - **`express-jwt 0.1.3`**, **`base64url 0.0.6`**, **`body-parser 1.20.8`** : versions d'une autre époque,
   toutes corrigeables.
 
-## Secrets — 1 secret détecté (HIGH)
+## Les 3 alertes HIGH / CRITICAL sans correctif disponible
 
-| Élément | Valeur |
-|---|---|
-| Règle | `AsymmetricPrivateKey` (type `private-key`) |
-| Sévérité | HIGH |
-| Fichier | `/juice-shop/lib/insecurity.ts:21` |
-| Couche d'origine | `COPY --chown=65532:0 /juice-shop .` (étape de build) |
+Sur les 43 alertes HIGH et CRITICAL, **40 ont une version corrigée** et **3 n'en ont aucune**. Ces trois-là ne
+peuvent pas être fermées par une mise à jour : elles se documentent, elles ne se corrigent pas.
 
-Le reste de l'image est propre : Trivy annonce `Total: 1` et les manifestes `package.json` scannés ne
-contiennent aucun secret.
+| Sévérité | Identifiant | Paquet | Version installée | Version corrigée |
+|---|---|---|---|---|
+| CRITICAL | CVE-2026-101894 | decompress | 4.2.1 | — |
+| CRITICAL | CVE-2026-53486 | decompress | 4.2.1 | — |
+| CRITICAL | GHSA-5mrr-rgp6-x4gr | marsdb | 0.6.11 | — |
 
-**Ce que c'est :** Juice Shop embarque dans son code une **clé privée RSA** qui signe les jetons JWT — le module
-s'appelle d'ailleurs `insecurity.ts`, c'est un choix pédagogique assumé de l'application. La conséquence, dans une
-vraie application, serait directe : toute personne qui télécharge l'image peut forger des jetons valides.
+Elles sont transmises à Hasna pour la colonne « accepter et surveiller » du tableau de tri. La commande qui les
+isole :
 
-**Décision :** aucune correction de notre part. L'image est publiée telle quelle par son éditeur et nous ne modifions
-pas le code de l'application. Le constat est documenté comme risque de conception.
+```bash
+awk -F'\t' '($1=="CRITICAL"||$1=="HIGH") && ($5==""||$5=="-")' 06-inventaire.tsv
+```
 
-> Aucune valeur de clé n'est recopiée dans ce document, ni dans le README du workshop : on cite le chemin, la règle
-> et la décision.
+## Secrets — 5 secrets détectés (3 HIGH, 2 MEDIUM)
+
+| # | Sévérité | Règle | Fichier | Ce que c'est |
+|---|---|---|---|---|
+| 1 | HIGH | `AsymmetricPrivateKey` | `/juice-shop/lib/insecurity.ts:21` | la clé privée RSA qui signe les JWT, **dans le source TypeScript** |
+| 2 | HIGH | `AsymmetricPrivateKey` | `/juice-shop/build/lib/insecurity.js:55` | **la même clé**, dans le JavaScript compilé livré dans l'image |
+| 3 | HIGH | `AsymmetricPrivateKey` | `/juice-shop/infrastructure/terraform/networking.tf:171` | une clé privée de certificat TLS, dans un fichier d'infrastructure |
+| 4 | MEDIUM | `JWT` | `/juice-shop/frontend/src/app/app.guard.spec.ts:46` | un jeton JWT en dur dans un test unitaire Angular |
+| 5 | MEDIUM | `JWT` | `/juice-shop/frontend/src/app/last-login-ip/last-login-ip.component.spec.ts:72` | un second jeton JWT dans un test unitaire |
+
+Total annoncé par Trivy : `HIGH: 3`, `MEDIUM: 2`. Les manifestes `package.json` de l'image sont, eux, tous propres (`-`).
+
+**Ce que ça raconte — et c'est plus intéressant qu'un simple « 1 secret » :**
+
+- Les deux HIGH `insecurity` sont **la même clé, présente deux fois** : une fois dans le fichier TypeScript, une fois
+  dans sa version compilée. Conséquence concrète : la clé de signature des jetons est livrée **dans l'image publiée**,
+  donc toute personne qui télécharge l'image peut forger des jetons valides. C'est un choix pédagogique de Juice Shop
+  (le module s'appelle `insecurity.ts`), mais le constat est réel.
+- La troisième HIGH est une **clé privée de certificat TLS** rangée dans un fichier Terraform : même logique, un
+  secret ne doit jamais vivre dans un dépôt ni dans une image.
+- Les deux MEDIUM sont des **jetons de test** dans des fichiers `.spec.ts` : ce sont des fixtures, pas des secrets de
+  production. On peut les écarter, mais seulement en le disant — et en citant le fichier.
+
+**Décision :** aucune correction de notre part (nous ne modifions pas le code de l'application), mais les cinq
+constats sont documentés, avec leur nature exacte. Aucune valeur n'est recopiée dans ce document.
+
+> Preuve : `04-secrets.txt` contient le rapport complet ; la commande qui isole les constats est
+> `sed -n '/insecurity.js (secrets)/,$p' 04-secrets.txt`.
 
 ## Mauvaises configurations — 42 alertes, dont **0** dans le Dockerfile de l'application
 
@@ -180,21 +205,82 @@ d'infrastructure non conformes ». C'est exactement le genre de nuance qu'un cor
 |---|---|
 | `00-version-trivy.txt` | version de Trivy, date UTC, état du poste |
 | `01-digest-image.txt` | digest de l'image scannée |
-| `02-vulns-high-critical.txt` | tableau lisible (sortie console) |
+| `02-vulns-high-critical.txt` | journal du scan filtré (sortie console) |
+| `02b-tableau-propre.txt` | tableau des 43 lignes HIGH / CRITICAL, dérivé du JSON |
 | `03-rapport.json` | rapport complet, **non filtré** |
 | `03-rapport.sarif` | même contenu, format CI |
 | `03-sbom.cdx.json` | SBOM CycloneDX |
-| `04-secrets.txt` | rapport du scan de secrets (1 secret, HIGH) |
+| `04-secrets.txt` | rapport du scan de secrets (5 constats : 3 HIGH, 2 MEDIUM) |
 | `05-misconfig-dockerfile.txt` | rapport de `trivy config` (42 alertes) |
 | `06-inventaire.tsv` | une ligne par CVE, extraite du JSON |
 | `06-compteurs.txt` | compteurs recalculés depuis le TSV |
 | `07-sha256.txt` | empreintes de toutes les preuves |
+
+## Captures d'écran
+
+Les six captures sont dans `docs/workshop5/screenshots/` (un dossier au-dessus de ce readme). Chacune répond à une
+question précise : qui a scanné quoi, avec quel outil, et qu'a-t-il trouvé.
+
+### 1. L'outil et la cible — `trivy-01-identite.png`
+
+![Version de Trivy et digest de l'image](../screenshots/trivy-01-identite.png)
+
+`Version: 0.75.0` pour l'outil, et pour la cible : tag `latest`, mais surtout le **digest**
+`sha256:42843723a7bf…5853f4`. Le tag `latest` bouge ; le digest, non. C'est lui qui rend le scan reproductible : si
+Hasna re-scanne dans deux semaines et obtient le même digest, toute différence de résultat viendra des mises à jour de
+la base de vulnérabilités, pas de l'image.
+
+### 2. Le scan en cours d'exécution — `trivy-02-scan-execution.png`
+
+![Journal du scan : détection de l'OS et des paquets](../screenshots/trivy-02-scan-execution.png)
+
+Deux lignes à retenir : `Detected OS family="debian" version="13.7"` et `pkg_num=14`, plus
+`Number of language-specific files num=1`. Ce sont exactement les valeurs annoncées plus haut : la capture et le
+rapport se confirment l'un l'autre, aucun chiffre n'est posé sans preuve.
+
+### 3. Le tableau des alertes — `trivy-03-vulns-tableau.png`
+
+![Tableau des alertes HIGH et CRITICAL](../screenshots/trivy-03-vulns-tableau.png)
+
+Les 20 premières lignes des **43** alertes HIGH / CRITICAL, sur cinq colonnes : sévérité, identifiant, paquet, version
+installée, version corrigée. Le fichier complet (`02b-tableau-propre.txt`) en contient 43. On voit déjà les deux
+`decompress` avec un tiret en dernière colonne : ce sont deux des trois alertes sans correctif.
+
+> Pourquoi un fichier `02b` ? Le journal brut `02-vulns-high-critical.txt` fait environ 2 700 lignes, en grande partie
+> occupées par la barre de progression du téléchargement de la base. `02b` a été dérivé du JSON (`03-rapport.json`) pour
+> obtenir un tableau lisible sans relancer de scan.
+
+### 4. Les compteurs — `trivy-04-compteurs.png`
+
+![Compteurs par sévérité](../screenshots/trivy-04-compteurs.png)
+
+`60 MEDIUM`, `32 HIGH`, `11 LOW`, `11 CRITICAL`, `1 UNKNOWN` — soit 115 alertes — puis `43` (HIGH + CRITICAL) et `40`
+(celles qui ont une version corrigée). Ces nombres sont **recalculés** à partir de l'inventaire ligne par ligne
+(`06-inventaire.tsv`), pas recopiés d'un résumé : c'est pour cela qu'ils tombent juste.
+
+### 5. Les secrets — `trivy-05-secret.png`
+
+![Liste des cinq constats de secrets](../screenshots/trivy-05-secret.png)
+
+Les cinq fichiers concernés, avec leur règle : trois `HIGH: AsymmetricPrivateKey` et deux `MEDIUM: JWT`. Trivy masque
+les valeurs sensibles, il n'y a donc rien de confidentiel dans cette image — seulement des chemins et des
+identifiants de règle.
+
+### 6. Les mauvaises configurations — `trivy-06-misconfig.png`
+
+![Tableau des mauvaises configurations par fichier](../screenshots/trivy-06-misconfig.png)
+
+Ici la colonne des compteurs est fiable, fichier par fichier : `Dockerfile` à **0** et `infrastructure/Dockerfile` à
+**0** (les Dockerfiles de l'application sont propres), `test/smoke/Dockerfile` à **2**, et cinq fichiers `.tf` à **8**
+chacun. Total : 42. À lire avec la réserve du chapitre suivant : l'essentiel de ces alertes vise des fichiers
+d'infrastructure d'exemple livrés avec Juice Shop, pas l'image applicative.
 
 ## Ce que le volet transmet à Hasna
 
 | Élément | Où |
 |---|---|
 | les 43 alertes HIGH / CRITICAL à trier | `06-inventaire.tsv` |
+| les 5 secrets à statuer (3 HIGH, 2 MEDIUM) | `04-secrets.txt` |
 | les 3 sans version corrigée | filtre `$5=="" || $5=="-"` sur le TSV |
 | les 40 corrigeables, dont `jsonwebtoken` et `crypto-js` en tête | tableau ci-dessus |
 | l'identité exacte de l'image (digest) pour comparer avant / après | `01-digest-image.txt` |
