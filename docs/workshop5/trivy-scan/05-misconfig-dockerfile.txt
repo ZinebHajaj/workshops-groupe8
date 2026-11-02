@@ -1,0 +1,890 @@
+2026-11-01T15:54:08Z	INFO	[misconfig] Misconfiguration scanning is enabled
+2026-11-01T15:54:08Z	INFO	[checks-client] Need to update the checks bundle
+2026-11-01T15:54:08Z	INFO	[checks-client] Downloading the checks bundle...
+143.25 KiB / 234.57 KiB [------------------------------------>______________________] 61.07% ? p/s ?234.57 KiB / 234.57 KiB [--------------------------------------------------------->] 100.00% ? p/s ?234.57 KiB / 234.57 KiB [---------------------------------------------] 100.00% 738.25 KiB p/s 500ms2026-11-01T15:54:12Z	INFO	[terraform scanner] Scanning root module	file_path="data/static/codefixes"
+2026-11-01T15:54:12Z	INFO	[terraform scanner] Scanning root module	file_path="infrastructure/terraform"
+2026-11-01T15:54:12Z	INFO	[terraform scanner] Scanning root module	file_path="terraform"
+2026-11-01T15:54:13Z	INFO	Detected config files	num=13
+
+📣 [34mNotices:[0m
+  - Version 0.76.1 of Trivy is now available, current version is 0.75.0
+
+To suppress version checks, run Trivy scans with the --skip-version-check flag
+
+
+Report Summary
+
+┌──────────────────────────────────────────────────────────┬────────────┬───────────────────┐
+│                          Target                          │    Type    │ Misconfigurations │
+├──────────────────────────────────────────────────────────┼────────────┼───────────────────┤
+│ Dockerfile                                               │ dockerfile │         0         │
+├──────────────────────────────────────────────────────────┼────────────┼───────────────────┤
+│ data/static/codefixes                                    │ terraform  │         0         │
+├──────────────────────────────────────────────────────────┼────────────┼───────────────────┤
+│ data/static/codefixes/iacLeakedKeyChallenge_1.tf         │ terraform  │         8         │
+├──────────────────────────────────────────────────────────┼────────────┼───────────────────┤
+│ data/static/codefixes/iacLeakedKeyChallenge_2.tf         │ terraform  │         8         │
+├──────────────────────────────────────────────────────────┼────────────┼───────────────────┤
+│ data/static/codefixes/iacLeakedKeyChallenge_3_correct.tf │ terraform  │         8         │
+├──────────────────────────────────────────────────────────┼────────────┼───────────────────┤
+│ infrastructure/Dockerfile                                │ dockerfile │         0         │
+├──────────────────────────────────────────────────────────┼────────────┼───────────────────┤
+│ infrastructure/terraform                                 │ terraform  │         0         │
+├──────────────────────────────────────────────────────────┼────────────┼───────────────────┤
+│ infrastructure/terraform/main.tf                         │ terraform  │         0         │
+├──────────────────────────────────────────────────────────┼────────────┼───────────────────┤
+│ infrastructure/terraform/networking.tf                   │ terraform  │         8         │
+├──────────────────────────────────────────────────────────┼────────────┼───────────────────┤
+│ terraform                                                │ terraform  │         0         │
+├──────────────────────────────────────────────────────────┼────────────┼───────────────────┤
+│ terraform/main.tf                                        │ terraform  │         0         │
+├──────────────────────────────────────────────────────────┼────────────┼───────────────────┤
+│ terraform/networking.tf                                  │ terraform  │         8         │
+├──────────────────────────────────────────────────────────┼────────────┼───────────────────┤
+│ test/smoke/Dockerfile                                    │ dockerfile │         2         │
+└──────────────────────────────────────────────────────────┴────────────┴───────────────────┘
+Legend:
+- '-': Not scanned
+- '0': Clean (no security findings detected)
+
+
+data/static/codefixes/iacLeakedKeyChallenge_1.tf (terraform)
+============================================================
+Tests: 8 (SUCCESSES: 0, FAILURES: 8)
+Failures: 8 (HIGH: 4, CRITICAL: 4)
+
+AWS-0037 (HIGH): File system is not encrypted.
+════════════════════════════════════════
+If your organization is subject to corporate or regulatory policies that require encryption of data and metadata at rest, we recommend creating a file system that is encrypted at rest, and mounting your file system using encryption of data in transit.
+
+
+See https://avd.aquasec.com/misconfig/aws-0037
+────────────────────────────────────────
+ data/static/codefixes/iacLeakedKeyChallenge_1.tf:250
+   via data/static/codefixes/iacLeakedKeyChallenge_1.tf:248-260 (aws_efs_file_system.juice_shop_data)
+────────────────────────────────────────
+ 248   resource "aws_efs_file_system" "juice_shop_data" {
+ ...   
+ 250 [   encrypted      = var.efs_encrypted
+ ...   
+ 260   }
+────────────────────────────────────────
+
+
+AWS-0052 (HIGH): Application load balancer is not set to drop invalid headers.
+════════════════════════════════════════
+Passing unknown or invalid headers through to the target poses a potential risk of compromise.
+By setting drop_invalid_header_fields to true, anything that does not conform to well known, defined headers will be removed by the load balancer.
+
+
+See https://avd.aquasec.com/misconfig/aws-0052
+────────────────────────────────────────
+ data/static/codefixes/iacLeakedKeyChallenge_1.tf:121-132
+────────────────────────────────────────
+ 121 ┌ resource "aws_lb" "juice_shop" {
+ 122 │   name               = "${var.project_name}-alb"
+ 123 │   internal           = false
+ 124 │   load_balancer_type = "application"
+ 125 │   security_groups    = [aws_security_group.alb.id]
+ 126 │   subnets            = aws_subnet.public[*].id
+ 127 │ 
+ 128 │   tags = {
+ 129 └     Project     = var.project_name
+ ...   
+────────────────────────────────────────
+
+
+AWS-0053 (HIGH): Load balancer is exposed publicly.
+════════════════════════════════════════
+There are many scenarios in which you would want to expose a load balancer to the wider internet, but this check exists as a warning to prevent accidental exposure of internal assets. You should ensure that this resource should be exposed publicly.
+
+
+See https://avd.aquasec.com/misconfig/aws-0053
+────────────────────────────────────────
+ data/static/codefixes/iacLeakedKeyChallenge_1.tf:123
+   via data/static/codefixes/iacLeakedKeyChallenge_1.tf:121-132 (aws_lb.juice_shop)
+────────────────────────────────────────
+ 121   resource "aws_lb" "juice_shop" {
+ ...   
+ 123 [   internal           = false
+ ...   
+ 132   }
+────────────────────────────────────────
+
+
+AWS-0054 (CRITICAL): Listener for application load balancer does not use HTTPS.
+════════════════════════════════════════
+Plain HTTP is unencrypted and human-readable. This means that if a malicious actor was to eavesdrop on your connection, they would be able to see all of your data flowing back and forth.
+You should use HTTPS, which is HTTP over an encrypted (TLS) connection, meaning eavesdroppers cannot read your traffic.
+
+
+See https://avd.aquasec.com/misconfig/aws-0054
+────────────────────────────────────────
+ data/static/codefixes/iacLeakedKeyChallenge_1.tf:156-165
+────────────────────────────────────────
+ 156 ┌ resource "aws_lb_listener" "http" {
+ 157 │   load_balancer_arn = aws_lb.juice_shop.arn
+ 158 │   port              = 80
+ 159 │   protocol          = "HTTP"
+ 160 │ 
+ 161 │   default_action {
+ 162 │     type             = "forward"
+ 163 │     target_group_arn = aws_lb_target_group.juice_shop.arn
+ 164 │   }
+ 165 └ }
+────────────────────────────────────────
+
+
+AWS-0104 (CRITICAL): Security group rule allows unrestricted egress to any IP address.
+════════════════════════════════════════
+Opening up ports to connect out to the public internet is generally to be avoided. You should restrict access to IP addresses or ranges that are explicitly required where possible.
+
+
+See https://avd.aquasec.com/misconfig/aws-0104
+────────────────────────────────────────
+ data/static/codefixes/iacLeakedKeyChallenge_1.tf:85
+   via data/static/codefixes/iacLeakedKeyChallenge_1.tf:81-86 (egress)
+    via data/static/codefixes/iacLeakedKeyChallenge_1.tf:62-93 (aws_security_group.alb)
+────────────────────────────────────────
+  62   resource "aws_security_group" "alb" {
+  ..   
+  85 [     cidr_blocks = ["0.0.0.0/0"]
+  ..   
+  93   }
+────────────────────────────────────────
+
+
+AWS-0104 (CRITICAL): Security group rule allows unrestricted egress to any IP address.
+════════════════════════════════════════
+Opening up ports to connect out to the public internet is generally to be avoided. You should restrict access to IP addresses or ranges that are explicitly required where possible.
+
+
+See https://avd.aquasec.com/misconfig/aws-0104
+────────────────────────────────────────
+ data/static/codefixes/iacLeakedKeyChallenge_1.tf:111
+   via data/static/codefixes/iacLeakedKeyChallenge_1.tf:107-112 (egress)
+    via data/static/codefixes/iacLeakedKeyChallenge_1.tf:95-119 (aws_security_group.ecs)
+────────────────────────────────────────
+  95   resource "aws_security_group" "ecs" {
+  ..   
+ 111 [     cidr_blocks = ["0.0.0.0/0"]
+ ...   
+ 119   }
+────────────────────────────────────────
+
+
+AWS-0104 (CRITICAL): Security group rule allows unrestricted egress to any IP address.
+════════════════════════════════════════
+Opening up ports to connect out to the public internet is generally to be avoided. You should restrict access to IP addresses or ranges that are explicitly required where possible.
+
+
+See https://avd.aquasec.com/misconfig/aws-0104
+────────────────────────────────────────
+ data/static/codefixes/iacLeakedKeyChallenge_1.tf:238
+   via data/static/codefixes/iacLeakedKeyChallenge_1.tf:234-239 (egress)
+    via data/static/codefixes/iacLeakedKeyChallenge_1.tf:222-246 (aws_security_group.efs)
+────────────────────────────────────────
+ 222   resource "aws_security_group" "efs" {
+ ...   
+ 238 [     cidr_blocks = ["0.0.0.0/0"]
+ ...   
+ 246   }
+────────────────────────────────────────
+
+
+AWS-0164 (HIGH): Subnet associates public IP address.
+════════════════════════════════════════
+You should limit the provision of public IP addresses for resources. Resources should not be exposed on the public internet, but should have access limited to consumers required for the function of your application.
+
+
+See https://avd.aquasec.com/misconfig/aws-0164
+────────────────────────────────────────
+ data/static/codefixes/iacLeakedKeyChallenge_1.tf:22
+   via data/static/codefixes/iacLeakedKeyChallenge_1.tf:17-29 (aws_subnet.public[0])
+────────────────────────────────────────
+  17   resource "aws_subnet" "public" {
+  ..   
+  22 [   map_public_ip_on_launch = true
+  ..   
+  29   }
+────────────────────────────────────────
+
+
+
+data/static/codefixes/iacLeakedKeyChallenge_2.tf (terraform)
+============================================================
+Tests: 8 (SUCCESSES: 0, FAILURES: 8)
+Failures: 8 (HIGH: 4, CRITICAL: 4)
+
+AWS-0037 (HIGH): File system is not encrypted.
+════════════════════════════════════════
+If your organization is subject to corporate or regulatory policies that require encryption of data and metadata at rest, we recommend creating a file system that is encrypted at rest, and mounting your file system using encryption of data in transit.
+
+
+See https://avd.aquasec.com/misconfig/aws-0037
+────────────────────────────────────────
+ data/static/codefixes/iacLeakedKeyChallenge_2.tf:250
+   via data/static/codefixes/iacLeakedKeyChallenge_2.tf:248-260 (aws_efs_file_system.juice_shop_data)
+────────────────────────────────────────
+ 248   resource "aws_efs_file_system" "juice_shop_data" {
+ ...   
+ 250 [   encrypted      = var.efs_encrypted
+ ...   
+ 260   }
+────────────────────────────────────────
+
+
+AWS-0052 (HIGH): Application load balancer is not set to drop invalid headers.
+════════════════════════════════════════
+Passing unknown or invalid headers through to the target poses a potential risk of compromise.
+By setting drop_invalid_header_fields to true, anything that does not conform to well known, defined headers will be removed by the load balancer.
+
+
+See https://avd.aquasec.com/misconfig/aws-0052
+────────────────────────────────────────
+ data/static/codefixes/iacLeakedKeyChallenge_2.tf:121-132
+────────────────────────────────────────
+ 121 ┌ resource "aws_lb" "juice_shop" {
+ 122 │   name               = "${var.project_name}-alb"
+ 123 │   internal           = false
+ 124 │   load_balancer_type = "application"
+ 125 │   security_groups    = [aws_security_group.alb.id]
+ 126 │   subnets            = aws_subnet.public[*].id
+ 127 │ 
+ 128 │   tags = {
+ 129 └     Project     = var.project_name
+ ...   
+────────────────────────────────────────
+
+
+AWS-0053 (HIGH): Load balancer is exposed publicly.
+════════════════════════════════════════
+There are many scenarios in which you would want to expose a load balancer to the wider internet, but this check exists as a warning to prevent accidental exposure of internal assets. You should ensure that this resource should be exposed publicly.
+
+
+See https://avd.aquasec.com/misconfig/aws-0053
+────────────────────────────────────────
+ data/static/codefixes/iacLeakedKeyChallenge_2.tf:123
+   via data/static/codefixes/iacLeakedKeyChallenge_2.tf:121-132 (aws_lb.juice_shop)
+────────────────────────────────────────
+ 121   resource "aws_lb" "juice_shop" {
+ ...   
+ 123 [   internal           = false
+ ...   
+ 132   }
+────────────────────────────────────────
+
+
+AWS-0054 (CRITICAL): Listener for application load balancer does not use HTTPS.
+════════════════════════════════════════
+Plain HTTP is unencrypted and human-readable. This means that if a malicious actor was to eavesdrop on your connection, they would be able to see all of your data flowing back and forth.
+You should use HTTPS, which is HTTP over an encrypted (TLS) connection, meaning eavesdroppers cannot read your traffic.
+
+
+See https://avd.aquasec.com/misconfig/aws-0054
+────────────────────────────────────────
+ data/static/codefixes/iacLeakedKeyChallenge_2.tf:156-165
+────────────────────────────────────────
+ 156 ┌ resource "aws_lb_listener" "http" {
+ 157 │   load_balancer_arn = aws_lb.juice_shop.arn
+ 158 │   port              = 80
+ 159 │   protocol          = "HTTP"
+ 160 │ 
+ 161 │   default_action {
+ 162 │     type             = "forward"
+ 163 │     target_group_arn = aws_lb_target_group.juice_shop.arn
+ 164 │   }
+ 165 └ }
+────────────────────────────────────────
+
+
+AWS-0104 (CRITICAL): Security group rule allows unrestricted egress to any IP address.
+════════════════════════════════════════
+Opening up ports to connect out to the public internet is generally to be avoided. You should restrict access to IP addresses or ranges that are explicitly required where possible.
+
+
+See https://avd.aquasec.com/misconfig/aws-0104
+────────────────────────────────────────
+ data/static/codefixes/iacLeakedKeyChallenge_2.tf:85
+   via data/static/codefixes/iacLeakedKeyChallenge_2.tf:81-86 (egress)
+    via data/static/codefixes/iacLeakedKeyChallenge_2.tf:62-93 (aws_security_group.alb)
+────────────────────────────────────────
+  62   resource "aws_security_group" "alb" {
+  ..   
+  85 [     cidr_blocks = ["0.0.0.0/0"]
+  ..   
+  93   }
+────────────────────────────────────────
+
+
+AWS-0104 (CRITICAL): Security group rule allows unrestricted egress to any IP address.
+════════════════════════════════════════
+Opening up ports to connect out to the public internet is generally to be avoided. You should restrict access to IP addresses or ranges that are explicitly required where possible.
+
+
+See https://avd.aquasec.com/misconfig/aws-0104
+────────────────────────────────────────
+ data/static/codefixes/iacLeakedKeyChallenge_2.tf:111
+   via data/static/codefixes/iacLeakedKeyChallenge_2.tf:107-112 (egress)
+    via data/static/codefixes/iacLeakedKeyChallenge_2.tf:95-119 (aws_security_group.ecs)
+────────────────────────────────────────
+  95   resource "aws_security_group" "ecs" {
+  ..   
+ 111 [     cidr_blocks = ["0.0.0.0/0"]
+ ...   
+ 119   }
+────────────────────────────────────────
+
+
+AWS-0104 (CRITICAL): Security group rule allows unrestricted egress to any IP address.
+════════════════════════════════════════
+Opening up ports to connect out to the public internet is generally to be avoided. You should restrict access to IP addresses or ranges that are explicitly required where possible.
+
+
+See https://avd.aquasec.com/misconfig/aws-0104
+────────────────────────────────────────
+ data/static/codefixes/iacLeakedKeyChallenge_2.tf:238
+   via data/static/codefixes/iacLeakedKeyChallenge_2.tf:234-239 (egress)
+    via data/static/codefixes/iacLeakedKeyChallenge_2.tf:222-246 (aws_security_group.efs)
+────────────────────────────────────────
+ 222   resource "aws_security_group" "efs" {
+ ...   
+ 238 [     cidr_blocks = ["0.0.0.0/0"]
+ ...   
+ 246   }
+────────────────────────────────────────
+
+
+AWS-0164 (HIGH): Subnet associates public IP address.
+════════════════════════════════════════
+You should limit the provision of public IP addresses for resources. Resources should not be exposed on the public internet, but should have access limited to consumers required for the function of your application.
+
+
+See https://avd.aquasec.com/misconfig/aws-0164
+────────────────────────────────────────
+ data/static/codefixes/iacLeakedKeyChallenge_2.tf:22
+   via data/static/codefixes/iacLeakedKeyChallenge_2.tf:17-29 (aws_subnet.public[0])
+────────────────────────────────────────
+  17   resource "aws_subnet" "public" {
+  ..   
+  22 [   map_public_ip_on_launch = true
+  ..   
+  29   }
+────────────────────────────────────────
+
+
+
+data/static/codefixes/iacLeakedKeyChallenge_3_correct.tf (terraform)
+====================================================================
+Tests: 8 (SUCCESSES: 0, FAILURES: 8)
+Failures: 8 (HIGH: 4, CRITICAL: 4)
+
+AWS-0037 (HIGH): File system is not encrypted.
+════════════════════════════════════════
+If your organization is subject to corporate or regulatory policies that require encryption of data and metadata at rest, we recommend creating a file system that is encrypted at rest, and mounting your file system using encryption of data in transit.
+
+
+See https://avd.aquasec.com/misconfig/aws-0037
+────────────────────────────────────────
+ data/static/codefixes/iacLeakedKeyChallenge_3_correct.tf:250
+   via data/static/codefixes/iacLeakedKeyChallenge_3_correct.tf:248-260 (aws_efs_file_system.juice_shop_data)
+────────────────────────────────────────
+ 248   resource "aws_efs_file_system" "juice_shop_data" {
+ ...   
+ 250 [   encrypted      = var.efs_encrypted
+ ...   
+ 260   }
+────────────────────────────────────────
+
+
+AWS-0052 (HIGH): Application load balancer is not set to drop invalid headers.
+════════════════════════════════════════
+Passing unknown or invalid headers through to the target poses a potential risk of compromise.
+By setting drop_invalid_header_fields to true, anything that does not conform to well known, defined headers will be removed by the load balancer.
+
+
+See https://avd.aquasec.com/misconfig/aws-0052
+────────────────────────────────────────
+ data/static/codefixes/iacLeakedKeyChallenge_3_correct.tf:121-132
+────────────────────────────────────────
+ 121 ┌ resource "aws_lb" "juice_shop" {
+ 122 │   name               = "${var.project_name}-alb"
+ 123 │   internal           = false
+ 124 │   load_balancer_type = "application"
+ 125 │   security_groups    = [aws_security_group.alb.id]
+ 126 │   subnets            = aws_subnet.public[*].id
+ 127 │ 
+ 128 │   tags = {
+ 129 └     Project     = var.project_name
+ ...   
+────────────────────────────────────────
+
+
+AWS-0053 (HIGH): Load balancer is exposed publicly.
+════════════════════════════════════════
+There are many scenarios in which you would want to expose a load balancer to the wider internet, but this check exists as a warning to prevent accidental exposure of internal assets. You should ensure that this resource should be exposed publicly.
+
+
+See https://avd.aquasec.com/misconfig/aws-0053
+────────────────────────────────────────
+ data/static/codefixes/iacLeakedKeyChallenge_3_correct.tf:123
+   via data/static/codefixes/iacLeakedKeyChallenge_3_correct.tf:121-132 (aws_lb.juice_shop)
+────────────────────────────────────────
+ 121   resource "aws_lb" "juice_shop" {
+ ...   
+ 123 [   internal           = false
+ ...   
+ 132   }
+────────────────────────────────────────
+
+
+AWS-0054 (CRITICAL): Listener for application load balancer does not use HTTPS.
+════════════════════════════════════════
+Plain HTTP is unencrypted and human-readable. This means that if a malicious actor was to eavesdrop on your connection, they would be able to see all of your data flowing back and forth.
+You should use HTTPS, which is HTTP over an encrypted (TLS) connection, meaning eavesdroppers cannot read your traffic.
+
+
+See https://avd.aquasec.com/misconfig/aws-0054
+────────────────────────────────────────
+ data/static/codefixes/iacLeakedKeyChallenge_3_correct.tf:156-165
+────────────────────────────────────────
+ 156 ┌ resource "aws_lb_listener" "http" {
+ 157 │   load_balancer_arn = aws_lb.juice_shop.arn
+ 158 │   port              = 80
+ 159 │   protocol          = "HTTP"
+ 160 │ 
+ 161 │   default_action {
+ 162 │     type             = "forward"
+ 163 │     target_group_arn = aws_lb_target_group.juice_shop.arn
+ 164 │   }
+ 165 └ }
+────────────────────────────────────────
+
+
+AWS-0104 (CRITICAL): Security group rule allows unrestricted egress to any IP address.
+════════════════════════════════════════
+Opening up ports to connect out to the public internet is generally to be avoided. You should restrict access to IP addresses or ranges that are explicitly required where possible.
+
+
+See https://avd.aquasec.com/misconfig/aws-0104
+────────────────────────────────────────
+ data/static/codefixes/iacLeakedKeyChallenge_3_correct.tf:85
+   via data/static/codefixes/iacLeakedKeyChallenge_3_correct.tf:81-86 (egress)
+    via data/static/codefixes/iacLeakedKeyChallenge_3_correct.tf:62-93 (aws_security_group.alb)
+────────────────────────────────────────
+  62   resource "aws_security_group" "alb" {
+  ..   
+  85 [     cidr_blocks = ["0.0.0.0/0"]
+  ..   
+  93   }
+────────────────────────────────────────
+
+
+AWS-0104 (CRITICAL): Security group rule allows unrestricted egress to any IP address.
+════════════════════════════════════════
+Opening up ports to connect out to the public internet is generally to be avoided. You should restrict access to IP addresses or ranges that are explicitly required where possible.
+
+
+See https://avd.aquasec.com/misconfig/aws-0104
+────────────────────────────────────────
+ data/static/codefixes/iacLeakedKeyChallenge_3_correct.tf:111
+   via data/static/codefixes/iacLeakedKeyChallenge_3_correct.tf:107-112 (egress)
+    via data/static/codefixes/iacLeakedKeyChallenge_3_correct.tf:95-119 (aws_security_group.ecs)
+────────────────────────────────────────
+  95   resource "aws_security_group" "ecs" {
+  ..   
+ 111 [     cidr_blocks = ["0.0.0.0/0"]
+ ...   
+ 119   }
+────────────────────────────────────────
+
+
+AWS-0104 (CRITICAL): Security group rule allows unrestricted egress to any IP address.
+════════════════════════════════════════
+Opening up ports to connect out to the public internet is generally to be avoided. You should restrict access to IP addresses or ranges that are explicitly required where possible.
+
+
+See https://avd.aquasec.com/misconfig/aws-0104
+────────────────────────────────────────
+ data/static/codefixes/iacLeakedKeyChallenge_3_correct.tf:238
+   via data/static/codefixes/iacLeakedKeyChallenge_3_correct.tf:234-239 (egress)
+    via data/static/codefixes/iacLeakedKeyChallenge_3_correct.tf:222-246 (aws_security_group.efs)
+────────────────────────────────────────
+ 222   resource "aws_security_group" "efs" {
+ ...   
+ 238 [     cidr_blocks = ["0.0.0.0/0"]
+ ...   
+ 246   }
+────────────────────────────────────────
+
+
+AWS-0164 (HIGH): Subnet associates public IP address.
+════════════════════════════════════════
+You should limit the provision of public IP addresses for resources. Resources should not be exposed on the public internet, but should have access limited to consumers required for the function of your application.
+
+
+See https://avd.aquasec.com/misconfig/aws-0164
+────────────────────────────────────────
+ data/static/codefixes/iacLeakedKeyChallenge_3_correct.tf:22
+   via data/static/codefixes/iacLeakedKeyChallenge_3_correct.tf:17-29 (aws_subnet.public[0])
+────────────────────────────────────────
+  17   resource "aws_subnet" "public" {
+  ..   
+  22 [   map_public_ip_on_launch = true
+  ..   
+  29   }
+────────────────────────────────────────
+
+
+
+infrastructure/terraform/networking.tf (terraform)
+==================================================
+Tests: 8 (SUCCESSES: 0, FAILURES: 8)
+Failures: 8 (HIGH: 4, CRITICAL: 4)
+
+AWS-0052 (HIGH): Application load balancer is not set to drop invalid headers.
+════════════════════════════════════════
+Passing unknown or invalid headers through to the target poses a potential risk of compromise.
+By setting drop_invalid_header_fields to true, anything that does not conform to well known, defined headers will be removed by the load balancer.
+
+
+See https://avd.aquasec.com/misconfig/aws-0052
+────────────────────────────────────────
+ infrastructure/terraform/networking.tf:122-133
+────────────────────────────────────────
+ 122 ┌ resource "aws_lb" "juice_shop" {
+ 123 │   name               = "${var.project_name}-alb"
+ 124 │   internal           = false
+ 125 │   load_balancer_type = "application"
+ 126 │   security_groups    = [aws_security_group.alb.id]
+ 127 │   subnets            = aws_subnet.public[*].id
+ 128 │ 
+ 129 │   tags = {
+ 130 └     Project     = var.project_name
+ ...   
+────────────────────────────────────────
+
+
+AWS-0053 (HIGH): Load balancer is exposed publicly.
+════════════════════════════════════════
+There are many scenarios in which you would want to expose a load balancer to the wider internet, but this check exists as a warning to prevent accidental exposure of internal assets. You should ensure that this resource should be exposed publicly.
+
+
+See https://avd.aquasec.com/misconfig/aws-0053
+────────────────────────────────────────
+ infrastructure/terraform/networking.tf:124
+   via infrastructure/terraform/networking.tf:122-133 (aws_lb.juice_shop)
+────────────────────────────────────────
+ 122   resource "aws_lb" "juice_shop" {
+ ...   
+ 124 [   internal           = false
+ ...   
+ 133   }
+────────────────────────────────────────
+
+
+AWS-0054 (CRITICAL): Listener for application load balancer does not use HTTPS.
+════════════════════════════════════════
+Plain HTTP is unencrypted and human-readable. This means that if a malicious actor was to eavesdrop on your connection, they would be able to see all of your data flowing back and forth.
+You should use HTTPS, which is HTTP over an encrypted (TLS) connection, meaning eavesdroppers cannot read your traffic.
+
+
+See https://avd.aquasec.com/misconfig/aws-0054
+────────────────────────────────────────
+ infrastructure/terraform/networking.tf:157-166
+────────────────────────────────────────
+ 157 ┌ resource "aws_lb_listener" "http" {
+ 158 │   load_balancer_arn = aws_lb.juice_shop.arn
+ 159 │   port              = 80
+ 160 │   protocol          = "HTTP"
+ 161 │ 
+ 162 │   default_action {
+ 163 │     type             = "forward"
+ 164 │     target_group_arn = aws_lb_target_group.juice_shop.arn
+ 165 │   }
+ 166 └ }
+────────────────────────────────────────
+
+
+AWS-0104 (CRITICAL): Security group rule allows unrestricted egress to any IP address.
+════════════════════════════════════════
+Opening up ports to connect out to the public internet is generally to be avoided. You should restrict access to IP addresses or ranges that are explicitly required where possible.
+
+
+See https://avd.aquasec.com/misconfig/aws-0104
+────────────────────────────────────────
+ infrastructure/terraform/networking.tf:86
+   via infrastructure/terraform/networking.tf:82-87 (egress)
+    via infrastructure/terraform/networking.tf:63-94 (aws_security_group.alb)
+────────────────────────────────────────
+  63   resource "aws_security_group" "alb" {
+  ..   
+  86 [     cidr_blocks = ["0.0.0.0/0"]
+  ..   
+  94   }
+────────────────────────────────────────
+
+
+AWS-0104 (CRITICAL): Security group rule allows unrestricted egress to any IP address.
+════════════════════════════════════════
+Opening up ports to connect out to the public internet is generally to be avoided. You should restrict access to IP addresses or ranges that are explicitly required where possible.
+
+
+See https://avd.aquasec.com/misconfig/aws-0104
+────────────────────────────────────────
+ infrastructure/terraform/networking.tf:112
+   via infrastructure/terraform/networking.tf:108-113 (egress)
+    via infrastructure/terraform/networking.tf:96-120 (aws_security_group.ecs)
+────────────────────────────────────────
+  96   resource "aws_security_group" "ecs" {
+  ..   
+ 112 [     cidr_blocks = ["0.0.0.0/0"]
+ ...   
+ 120   }
+────────────────────────────────────────
+
+
+AWS-0104 (CRITICAL): Security group rule allows unrestricted egress to any IP address.
+════════════════════════════════════════
+Opening up ports to connect out to the public internet is generally to be avoided. You should restrict access to IP addresses or ranges that are explicitly required where possible.
+
+
+See https://avd.aquasec.com/misconfig/aws-0104
+────────────────────────────────────────
+ infrastructure/terraform/networking.tf:239
+   via infrastructure/terraform/networking.tf:235-240 (egress)
+    via infrastructure/terraform/networking.tf:223-247 (aws_security_group.efs)
+────────────────────────────────────────
+ 223   resource "aws_security_group" "efs" {
+ ...   
+ 239 [     cidr_blocks = ["0.0.0.0/0"]
+ ...   
+ 247   }
+────────────────────────────────────────
+
+
+AWS-0164 (HIGH): Subnet associates public IP address.
+════════════════════════════════════════
+You should limit the provision of public IP addresses for resources. Resources should not be exposed on the public internet, but should have access limited to consumers required for the function of your application.
+
+
+See https://avd.aquasec.com/misconfig/aws-0164
+────────────────────────────────────────
+ infrastructure/terraform/networking.tf:23
+   via infrastructure/terraform/networking.tf:18-30 (aws_subnet.public[0])
+────────────────────────────────────────
+  18   resource "aws_subnet" "public" {
+  ..   
+  23 [   map_public_ip_on_launch = true
+  ..   
+  30   }
+────────────────────────────────────────
+
+
+AWS-0164 (HIGH): Subnet associates public IP address.
+════════════════════════════════════════
+You should limit the provision of public IP addresses for resources. Resources should not be exposed on the public internet, but should have access limited to consumers required for the function of your application.
+
+
+See https://avd.aquasec.com/misconfig/aws-0164
+────────────────────────────────────────
+ infrastructure/terraform/networking.tf:23
+   via infrastructure/terraform/networking.tf:18-30 (aws_subnet.public[1])
+────────────────────────────────────────
+  18   resource "aws_subnet" "public" {
+  ..   
+  23 [   map_public_ip_on_launch = true
+  ..   
+  30   }
+────────────────────────────────────────
+
+
+
+terraform/networking.tf (terraform)
+===================================
+Tests: 8 (SUCCESSES: 0, FAILURES: 8)
+Failures: 8 (HIGH: 4, CRITICAL: 4)
+
+AWS-0052 (HIGH): Application load balancer is not set to drop invalid headers.
+════════════════════════════════════════
+Passing unknown or invalid headers through to the target poses a potential risk of compromise.
+By setting drop_invalid_header_fields to true, anything that does not conform to well known, defined headers will be removed by the load balancer.
+
+
+See https://avd.aquasec.com/misconfig/aws-0052
+────────────────────────────────────────
+ terraform/networking.tf:122-133
+────────────────────────────────────────
+ 122 ┌ resource "aws_lb" "juice_shop" {
+ 123 │   name               = "${var.project_name}-alb"
+ 124 │   internal           = false
+ 125 │   load_balancer_type = "application"
+ 126 │   security_groups    = [aws_security_group.alb.id]
+ 127 │   subnets            = aws_subnet.public[*].id
+ 128 │ 
+ 129 │   tags = {
+ 130 └     Project     = var.project_name
+ ...   
+────────────────────────────────────────
+
+
+AWS-0053 (HIGH): Load balancer is exposed publicly.
+════════════════════════════════════════
+There are many scenarios in which you would want to expose a load balancer to the wider internet, but this check exists as a warning to prevent accidental exposure of internal assets. You should ensure that this resource should be exposed publicly.
+
+
+See https://avd.aquasec.com/misconfig/aws-0053
+────────────────────────────────────────
+ terraform/networking.tf:124
+   via terraform/networking.tf:122-133 (aws_lb.juice_shop)
+────────────────────────────────────────
+ 122   resource "aws_lb" "juice_shop" {
+ ...   
+ 124 [   internal           = false
+ ...   
+ 133   }
+────────────────────────────────────────
+
+
+AWS-0054 (CRITICAL): Listener for application load balancer does not use HTTPS.
+════════════════════════════════════════
+Plain HTTP is unencrypted and human-readable. This means that if a malicious actor was to eavesdrop on your connection, they would be able to see all of your data flowing back and forth.
+You should use HTTPS, which is HTTP over an encrypted (TLS) connection, meaning eavesdroppers cannot read your traffic.
+
+
+See https://avd.aquasec.com/misconfig/aws-0054
+────────────────────────────────────────
+ terraform/networking.tf:157-166
+────────────────────────────────────────
+ 157 ┌ resource "aws_lb_listener" "http" {
+ 158 │   load_balancer_arn = aws_lb.juice_shop.arn
+ 159 │   port              = 80
+ 160 │   protocol          = "HTTP"
+ 161 │ 
+ 162 │   default_action {
+ 163 │     type             = "forward"
+ 164 │     target_group_arn = aws_lb_target_group.juice_shop.arn
+ 165 │   }
+ 166 └ }
+────────────────────────────────────────
+
+
+AWS-0104 (CRITICAL): Security group rule allows unrestricted egress to any IP address.
+════════════════════════════════════════
+Opening up ports to connect out to the public internet is generally to be avoided. You should restrict access to IP addresses or ranges that are explicitly required where possible.
+
+
+See https://avd.aquasec.com/misconfig/aws-0104
+────────────────────────────────────────
+ terraform/networking.tf:86
+   via terraform/networking.tf:82-87 (egress)
+    via terraform/networking.tf:63-94 (aws_security_group.alb)
+────────────────────────────────────────
+  63   resource "aws_security_group" "alb" {
+  ..   
+  86 [     cidr_blocks = ["0.0.0.0/0"]
+  ..   
+  94   }
+────────────────────────────────────────
+
+
+AWS-0104 (CRITICAL): Security group rule allows unrestricted egress to any IP address.
+════════════════════════════════════════
+Opening up ports to connect out to the public internet is generally to be avoided. You should restrict access to IP addresses or ranges that are explicitly required where possible.
+
+
+See https://avd.aquasec.com/misconfig/aws-0104
+────────────────────────────────────────
+ terraform/networking.tf:112
+   via terraform/networking.tf:108-113 (egress)
+    via terraform/networking.tf:96-120 (aws_security_group.ecs)
+────────────────────────────────────────
+  96   resource "aws_security_group" "ecs" {
+  ..   
+ 112 [     cidr_blocks = ["0.0.0.0/0"]
+ ...   
+ 120   }
+────────────────────────────────────────
+
+
+AWS-0104 (CRITICAL): Security group rule allows unrestricted egress to any IP address.
+════════════════════════════════════════
+Opening up ports to connect out to the public internet is generally to be avoided. You should restrict access to IP addresses or ranges that are explicitly required where possible.
+
+
+See https://avd.aquasec.com/misconfig/aws-0104
+────────────────────────────────────────
+ terraform/networking.tf:239
+   via terraform/networking.tf:235-240 (egress)
+    via terraform/networking.tf:223-247 (aws_security_group.efs)
+────────────────────────────────────────
+ 223   resource "aws_security_group" "efs" {
+ ...   
+ 239 [     cidr_blocks = ["0.0.0.0/0"]
+ ...   
+ 247   }
+────────────────────────────────────────
+
+
+AWS-0164 (HIGH): Subnet associates public IP address.
+════════════════════════════════════════
+You should limit the provision of public IP addresses for resources. Resources should not be exposed on the public internet, but should have access limited to consumers required for the function of your application.
+
+
+See https://avd.aquasec.com/misconfig/aws-0164
+────────────────────────────────────────
+ terraform/networking.tf:23
+   via terraform/networking.tf:18-30 (aws_subnet.public[0])
+────────────────────────────────────────
+  18   resource "aws_subnet" "public" {
+  ..   
+  23 [   map_public_ip_on_launch = true
+  ..   
+  30   }
+────────────────────────────────────────
+
+
+AWS-0164 (HIGH): Subnet associates public IP address.
+════════════════════════════════════════
+You should limit the provision of public IP addresses for resources. Resources should not be exposed on the public internet, but should have access limited to consumers required for the function of your application.
+
+
+See https://avd.aquasec.com/misconfig/aws-0164
+────────────────────────────────────────
+ terraform/networking.tf:23
+   via terraform/networking.tf:18-30 (aws_subnet.public[1])
+────────────────────────────────────────
+  18   resource "aws_subnet" "public" {
+  ..   
+  23 [   map_public_ip_on_launch = true
+  ..   
+  30   }
+────────────────────────────────────────
+
+
+
+test/smoke/Dockerfile (dockerfile)
+==================================
+Tests: 20 (SUCCESSES: 18, FAILURES: 2)
+Failures: 2 (HIGH: 2, CRITICAL: 0)
+
+DS-0002 (HIGH): Specify at least 1 USER command in Dockerfile with non-root user as argument
+════════════════════════════════════════
+Running containers with 'root' user can lead to a container escape situation. It is a best practice to run containers as non-root users, which can be done by adding a 'USER' statement to the Dockerfile.
+
+See https://avd.aquasec.com/misconfig/ds-0002
+────────────────────────────────────────
+
+
+DS-0025 (HIGH): '--no-cache' is missed: apk add curl
+════════════════════════════════════════
+You should use 'apk add' with '--no-cache' to clean package cached data and reduce image size.
+
+See https://avd.aquasec.com/misconfig/ds-0025
+────────────────────────────────────────
+ test/smoke/Dockerfile:3
+────────────────────────────────────────
+   3 [ RUN apk add curl
+────────────────────────────────────────
+
+
