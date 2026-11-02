@@ -238,18 +238,18 @@ wc -l 02b-tableau-propre.txt      # 44 lignes = en-tête + 43 alertes
 
 | Fichier | Contenu | Ce qu'il permet de prouver |
 |---|---|---|
-| [`00-version-trivy.txt`](trivy-scan/00-version-trivy.txt) | version, date UTC, état du poste | avec quel outil, et quand |
-| [`01-digest-image.txt`](trivy-scan/01-digest-image.txt) | digest de l'image | quelle image exactement |
-| [`02-vulns-high-critical.txt`](trivy-scan/02-vulns-high-critical.txt) | journal du scan filtré | que le scan est allé au bout |
-| [`02b-tableau-propre.txt`](trivy-scan/02b-tableau-propre.txt) | tableau des 43 lignes | la lecture humaine, sans bruit |
-| [`03-rapport.json`](trivy-scan/03-rapport.json) | rapport complet non filtré | la source de tous les compteurs |
-| [`03-rapport.sarif`](trivy-scan/03-rapport.sarif) | même analyse au format forge | le lien vers GitHub Security |
-| [`03-sbom.cdx.json`](trivy-scan/03-sbom.cdx.json) | inventaire du contenu (CycloneDX) | la composition de l'image |
-| [`04-secrets.txt`](trivy-scan/04-secrets.txt) | rapport du scanner de secrets | les 5 constats et leur localisation |
-| [`05-misconfig-dockerfile.txt`](trivy-scan/05-misconfig-dockerfile.txt) | rapport de configuration | les 42 alertes par fichier |
-| [`06-inventaire.tsv`](trivy-scan/06-inventaire.tsv) | une ligne par vulnérabilité | le tri et les filtres |
-| [`06-compteurs.txt`](trivy-scan/06-compteurs.txt) | compteurs recalculés | la cohérence 115 / 43 / 40 |
-| [`07-sha256.txt`](trivy-scan/07-sha256.txt) | empreinte de chaque preuve | que rien n'a bougé depuis |
+| [`00-version-trivy.txt`](docs/workshop5/trivy-scan/00-version-trivy.txt) | version, date UTC, état du poste | avec quel outil, et quand |
+| [`01-digest-image.txt`](docs/workshop5/trivy-scan/01-digest-image.txt) | digest de l'image | quelle image exactement |
+| [`02-vulns-high-critical.txt`](docs/workshop5/trivy-scan/02-vulns-high-critical.txt) | journal du scan filtré | que le scan est allé au bout |
+| [`02b-tableau-propre.txt`](docs/workshop5/trivy-scan/02b-tableau-propre.txt) | tableau des 43 lignes | la lecture humaine, sans bruit |
+| [`03-rapport.json`](docs/workshop5/trivy-scan/03-rapport.json) | rapport complet non filtré | la source de tous les compteurs |
+| [`03-rapport.sarif`](docs/workshop5/trivy-scan/03-rapport.sarif) | même analyse au format forge | le lien vers GitHub Security |
+| [`03-sbom.cdx.json`](docs/workshop5/trivy-scan/03-sbom.cdx.json) | inventaire du contenu (CycloneDX) | la composition de l'image |
+| [`04-secrets.txt`](docs/workshop5/trivy-scan/04-secrets.txt) | rapport du scanner de secrets | les 5 constats et leur localisation |
+| [`05-misconfig-dockerfile.txt`](docs/workshop5/trivy-scan/05-misconfig-dockerfile.txt) | rapport de configuration | les 42 alertes par fichier |
+| [`06-inventaire.tsv`](docs/workshop5/trivy-scan/06-inventaire.tsv) | une ligne par vulnérabilité | le tri et les filtres |
+| [`06-compteurs.txt`](docs/workshop5/trivy-scan/06-compteurs.txt) | compteurs recalculés | la cohérence 115 / 43 / 40 |
+| [`07-sha256.txt`](docs/workshop5/trivy-scan/07-sha256.txt) | empreinte de chaque preuve | que rien n'a bougé depuis |
 
 ```bash
 cd docs/workshop5/trivy-scan && sha256sum -c 07-sha256.txt
