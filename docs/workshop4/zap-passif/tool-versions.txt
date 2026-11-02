@@ -1,0 +1,9 @@
+date_utc            = 2026-11-01T01:44:48Z
+hote                = ouzziki-HP-EliteBook / Linux 7.0.0-38-generic x86_64
+docker              = Docker version 29.9.2, build a82e528
+git                 = git version 2.53.0
+commit              = 5dc18a61ca08a7a0452722f943a0da05de2a6608
+branche             = workshop4-zap-passif-lhoussaine
+juice-shop version  = 20.3.0
+cible (vue par ZAP) = http://juice-shop-groupe8:3000
+methode             = B (image publiee) ; build local en echec ERESOLVE
