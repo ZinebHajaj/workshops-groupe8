@@ -1,3 +1,10 @@
+# Workshops DevSecOps — Group 8 
+
+**Groupe 8** — Zineb Hajaj · Hasna elhassani · Ouzziki Lhoussaine \
+**Projet analysé :** Workshops DevSecOps \
+**Dépôt :** https://github.com/ZinebHajaj/workshops-groupe8
+
+---
 
 # Workshop 4 — Tests de sécurité dynamiques (DAST) avec OWASP ZAP
 
@@ -47,11 +54,56 @@ Objectifs :
 
 | Membre | Volet | Branche | Preuves | État |
 |---|---|---|---|---|
-| **Ouzziki Lhoussaine** | préparation de la cible, scan **passif** de référence, analyse et captures | `workshop4-zap-passif-lhoussaine` (`81372f8`, `2557d68`, `ae74dd0`) | `docs/workshop4/zap-passif/` + 14 captures `zap-01…zap-12` | ✅ intégré dans `Workshop4` |
-| **Zineb Hajaj** | scan **actif** autorisé, alertes actives, rejeu manuel, corrélation SAST | `workshop4-zap-actif-zineb` (`0d1770d`, `7323e7a`, `6df4f5d`) | `docs/workshop4/zap-actif/` + 15 captures `zap-actif-01…12` | ✅ intégré dans `Workshop4` |
-| **Hasna elhassani** | workflow GitHub Actions, artefacts de CI, discussion DAST, remise | `workshop4-zap-pipeline-hasna` (`d54fdde`) | `.github/workflows/zap-baseline.yml`, `.zap/rules.tsv`, run #1 | ✅ livré, à fusionner dans `Workshop4` |
+| **Ouzziki Lhoussaine** | préparation de la cible, scan **passif** de référence, analyse et captures | [`workshop4-zap-passif-lhoussaine`](https://github.com/ZinebHajaj/workshops-groupe8/tree/workshop4-zap-passif-lhoussaine) (`81372f8`, `2557d68`, `ae74dd0`) | `docs/workshop4/zap-passif/` + 14 captures `zap-01…zap-12` | ✅ intégré dans `Workshop4` |
+| **Zineb Hajaj** | scan **actif** autorisé, alertes actives, rejeu manuel, corrélation SAST | [`workshop4-zap-actif-zineb`](https://github.com/ZinebHajaj/workshops-groupe8/tree/workshop4-zap-actif-zineb) (`0d1770d`, `7323e7a`, `6df4f5d`) | `docs/workshop4/zap-actif/` + 15 captures `zap-actif-01…12` | ✅ intégré dans `Workshop4` |
+| **Hasna elhassani** | workflow GitHub Actions, artefacts de CI, discussion DAST, remise | [`workshop4-zap-pipeline-hasna`](https://github.com/ZinebHajaj/workshops-groupe8/tree/workshop4-zap-pipeline-hasna) (`d54fdde`) | `.github/workflows/zap-baseline.yml`, `.zap/rules.tsv`, run #1 | ✅ livré, à fusionner dans `Workshop4` |
 
 Principe de travail : une branche par personne, un périmètre par personne, aucun résultat repris d'un autre. Chaque affirmation de ce README se rattache à un fichier de `docs/workshop4/`, à un commit ou à un run de CI.
+
+### 2.1 La méthode : une branche par membre, puis une fusion
+
+Chaque membre a travaillé sur **sa propre branche**, créée depuis la branche d'atelier, et **personne n'a poussé directement sur la branche de remise**. Les trois volets ont ensuite été fusionnés dans `Workshop4`, un par un, après relecture. Ce choix a trois conséquences concrètes :
+
+- **l'attribution est vérifiable** : l'historique de chaque volet porte le nom de son auteur, et le professeur peut isoler un travail sans le confondre avec celui des autres ;
+- **les conflits restent rares et tardifs** : chaque membre travaillant sur des fichiers différents, les contradictions n'apparaissent qu'au moment de la fusion, où elles sont visibles et arbitrables ;
+- **chaque volet est relisible seul** : une branche peut être ouverte, comparée et validée indépendamment des deux autres — ce qui n'est pas possible quand tout le monde pousse sur la même branche.
+
+```
+main ────┬─────────────────────────────────────────────────────────────────►
+         │
+         ├─ workshop4-zap-passif-lhoussaine  81372f8 ─ 2557d68 ─ ae74dd0 ─┐
+         │                                                                 │  PR #40
+         ├─ workshop4-zap-actif-zineb        0d1770d ─ 7323e7a ─ 6df4f5d ─┤  merge 2792a49
+         │                                                                 │  7323e7a
+         └─ workshop4-zap-pipeline-hasna     d54fdde ─────────────────────┴─► Workshop4
+```
+
+**Les quatre branches, en un clic :** [`Workshop4`](https://github.com/ZinebHajaj/workshops-groupe8/tree/Workshop4) · [`workshop4-zap-passif-lhoussaine`](https://github.com/ZinebHajaj/workshops-groupe8/tree/workshop4-zap-passif-lhoussaine) · [`workshop4-zap-actif-zineb`](https://github.com/ZinebHajaj/workshops-groupe8/tree/workshop4-zap-actif-zineb) · [`workshop4-zap-pipeline-hasna`](https://github.com/ZinebHajaj/workshops-groupe8/tree/workshop4-zap-pipeline-hasna)
+
+| Membre | Branche de travail | Commits | Mode d'intégration | État |
+|---|---|---|---|---|
+| Ouzziki Lhoussaine | [`workshop4-zap-passif-lhoussaine`](https://github.com/ZinebHajaj/workshops-groupe8/tree/workshop4-zap-passif-lhoussaine) | `81372f8`, `2557d68`, `ae74dd0` | pull request **#40** → fusion `2792a49` | ✅ dans `Workshop4` |
+| Zineb Hajaj | [`workshop4-zap-actif-zineb`](https://github.com/ZinebHajaj/workshops-groupe8/tree/workshop4-zap-actif-zineb) | `0d1770d`, `7323e7a`, `6df4f5d` | fusion du commit `7323e7a` | ✅ dans `Workshop4` |
+| Hasna elhassani | [`workshop4-zap-pipeline-hasna`](https://github.com/ZinebHajaj/workshops-groupe8/tree/workshop4-zap-pipeline-hasna) | `d54fdde` | branche prête, fusion en attente | ⏳ reste à fusionner |
+
+**Les quatre règles que le groupe s'est données :**
+
+1. **une branche par personne**, nommée `workshop4-zap-<volet>-<prénom>` et créée depuis `Workshop4` ;
+2. **aucun push sur la branche d'un camarade** — on propose, on ne corrige pas le travail des autres ;
+3. **aucun force-push** : l'historique publié est définitif, sinon les preuves et les runs de CI deviennent invérifiables ;
+4. **la branche de remise ne reçoit que des fusions**, jamais de commit direct : elle raconte l'assemblage, pas le travail.
+
+**Comment le vérifier soi-même** (trois commandes, sans rien installer d'autre que `git`) :
+
+```bash
+git log --graph --oneline --all --decorate -20        # la forme de l'historique
+git shortlog -sn origin/Workshop4                     # qui a écrit combien de commits
+git log --oneline --author="Hasna" origin/Workshop4   # les commits d'un seul membre
+```
+
+**Pourquoi ne pas avoir tout fait sur une seule branche ?** Parce que le rendu attendu n'est pas seulement un résultat technique, c'est aussi un travail d'équipe réparti : avec une branche unique, impossible de dire qui a produit quoi, et le premier conflit sur `docs/workshop4/screenshots/` aurait coûté plus de temps que la mise en place des branches.
+
+---
 
 ## 3. Architecture du banc de test
 
@@ -601,7 +653,7 @@ docs/workshop4/
 
 | Volet | Branche | Commits |
 |---|---|---|
-| Passif | `workshop4-zap-passif-lhoussaine` | `81372f8` (run et preuves, 25 fichiers), `2557d68` (capture du commit), `ae74dd0` (renommage capture CSP) |
-| Actif | `workshop4-zap-actif-zineb` | `0d1770d` (rapports, cadre, captures), `7323e7a` (alertes, rejeu manuel, corrélation), `6df4f5d` (capture git log) |
-| CI | `workshop4-zap-pipeline-hasna` | `d54fdde` (workflow `zap-baseline.yml` + `.zap/rules.tsv`) |
-| Intégration | `Workshop4` | merge PR #40 (`2792a49`) pour le passif ; commit `7323e7a` pour l'actif ; la CI reste à fusionner |
+| Passif | [`workshop4-zap-passif-lhoussaine`](https://github.com/ZinebHajaj/workshops-groupe8/tree/workshop4-zap-passif-lhoussaine) | `81372f8` (run et preuves, 25 fichiers), `2557d68` (capture du commit), `ae74dd0` (renommage capture CSP) |
+| Actif | [`workshop4-zap-actif-zineb`](https://github.com/ZinebHajaj/workshops-groupe8/tree/workshop4-zap-actif-zineb) | `0d1770d` (rapports, cadre, captures), `7323e7a` (alertes, rejeu manuel, corrélation), `6df4f5d` (capture git log) |
+| CI | [`workshop4-zap-pipeline-hasna`](https://github.com/ZinebHajaj/workshops-groupe8/tree/workshop4-zap-pipeline-hasna) | `d54fdde` (workflow `zap-baseline.yml` + `.zap/rules.tsv`) |
+| Intégration | [`Workshop4`](https://github.com/ZinebHajaj/workshops-groupe8/tree/Workshop4) | merge PR #40 (`2792a49`) pour le passif ; commit `7323e7a` pour l'actif ; la CI reste à fusionner |
