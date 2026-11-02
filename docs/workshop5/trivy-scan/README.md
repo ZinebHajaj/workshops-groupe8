@@ -6,10 +6,10 @@
 |---|---|
 | Image scannée | `bkimminich/juice-shop:latest` |
 | Digest | `sha256:42843723a7bf4246aa5d63c324978b17ef296ac78434aeddd34c427bfb5853f4` |
-| Scanner | Trivy **0.75.0** (`aquasec/trivy:latest`) |
+| Scanner | Trivy **0.75.0** (`aquasec/trivy:latest`) — 0.76.1 disponible au moment du run |
 | Date du run | `2026-11-01T15:47:26Z` (UTC) |
 | Cibles analysées | **7** blocs `Results` dans le rapport JSON |
-| Format | table + JSON + SARIF + SBOM CycloneDX |
+| Formats produits | table, JSON, SARIF, SBOM CycloneDX |
 
 > Le digest est **identique** à celui relevé au workshop 4 (`docs/workshop4/zap-passif/image-digest.txt`) :
 > la même image a donc été attaquée en fonctionnement par ZAP, puis analysée au repos par Trivy.
@@ -32,7 +32,11 @@ docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
   -v "$PWD:/out" aquasec/trivy:latest image --format cyclonedx \
   --output /out/03-sbom.cdx.json bkimminich/juice-shop:latest
 
-docker run --rm -v "$PWD:/src" aquasec/trivy:latest config /src
+docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+  aquasec/trivy:latest image --scanners secret \
+  bkimminich/juice-shop:latest
+
+docker run --rm -v "$PWD:/src" aquasec/trivy:latest config --severity HIGH,CRITICAL /src
 ```
 
 ## Résultat du scan de vulnérabilités
@@ -53,7 +57,7 @@ Parmi les **43** alertes HIGH et CRITICAL :
 |---|---|
 | avec une version corrigée disponible | **40** |
 | sans version corrigée | **3** |
-| paquets distincts concernés | 22 `libc6`, 12 `tar`, 11 `sanitize-html`, 10 `jsonwebtoken`, 6 `minimatch` (top 5) |
+| paquets les plus touchés | `libc6` 22 · `tar` 12 · `sanitize-html` 11 · `jsonwebtoken` 10 · `minimatch` 6 |
 
 Ces chiffres sont recalculés depuis le JSON, jamais saisis à la main :
 
@@ -91,39 +95,84 @@ La liste complète des 115 lignes est dans `06-inventaire.tsv` (calculée depuis
 ### Ce que l'extrait montre déjà
 
 - **`jsonwebtoken 0.1.0`** : version très ancienne de la bibliothèque qui signe les jetons d'authentification.
-  Deux CVE HIGH et une CRITICAL la visent, avec des correctifs disponibles (4.2.2 puis 9.0.0) : c'est le
+  Deux CVE HIGH et une CRITICAL la visent, avec correctifs disponibles (4.2.2 puis 9.0.0) : c'est le
   premier candidat de remédiation pour Hasna.
 - **`crypto-js 3.3.0`** : deux CVE CRITICAL avec correctifs (4.0.0 et 4.2.0). Même conclusion.
 - **`decompress 4.2.1`** : deux CVE CRITICAL **sans version corrigée** (`—`). Aucune mise à jour ne les fermera :
-  ce sont des cas à documenter en « accepter et surveiller », pas à corriger.
+  cas à documenter en « accepter et surveiller », pas à corriger.
 - **`express-jwt 0.1.3`**, **`base64url 0.0.6`**, **`body-parser 1.20.8`** : versions d'une autre époque,
   toutes corrigeables.
 
-## Secrets
+## Secrets — 1 secret détecté (HIGH)
 
-Le fichier `04-secrets.txt` contient la sortie complète du journal (`2>&1`) : son nombre de lignes ne mesure
-pas les secrets trouvés. Le compte réel est obtenu par un scan propre :
+| Élément | Valeur |
+|---|---|
+| Règle | `AsymmetricPrivateKey` (type `private-key`) |
+| Sévérité | HIGH |
+| Fichier | `/juice-shop/lib/insecurity.ts:21` |
+| Couche d'origine | `COPY --chown=65532:0 /juice-shop .` (étape de build) |
 
-```bash
-docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
-  aquasec/trivy:latest image --scanners secret --quiet \
-  bkimminich/juice-shop:latest
-```
+Le reste de l'image est propre : Trivy annonce `Total: 1` et les manifestes `package.json` scannés ne
+contiennent aucun secret.
 
-> À compléter avec le résultat de ce scan propre. Aucun secret n'est recopié dans ce document : on ne cite que
-> le chemin, le type et la décision.
+**Ce que c'est :** Juice Shop embarque dans son code une **clé privée RSA** qui signe les jetons JWT — le module
+s'appelle d'ailleurs `insecurity.ts`, c'est un choix pédagogique assumé de l'application. La conséquence, dans une
+vraie application, serait directe : toute personne qui télécharge l'image peut forger des jetons valides.
 
-## Mauvaises configurations
+**Décision :** aucune correction de notre part. L'image est publiée telle quelle par son éditeur et nous ne modifions
+pas le code de l'application. Le constat est documenté comme risque de conception.
 
-Résultat de `trivy config` sur le répertoire du dépôt : voir `05-misconfig-dockerfile.txt`.
-Cette partie est reprise et traitée par Hasna (durcissement du Dockerfile).
+> Aucune valeur de clé n'est recopiée dans ce document, ni dans le README du workshop : on cite le chemin, la règle
+> et la décision.
+
+## Mauvaises configurations — 42 alertes, dont **0** dans le Dockerfile de l'application
+
+Scan `trivy config` sur le répertoire du dépôt : **13 fichiers de configuration détectés**.
+
+| Cible | Type | Mauvaises configurations |
+|---|---|---|
+| `Dockerfile` (racine) | dockerfile | **0** |
+| `infrastructure/Dockerfile` | dockerfile | **0** |
+| `test/smoke/Dockerfile` | dockerfile | 2 (HIGH ×2) |
+| `data/static/codefixes/iacLeakedKeyChallenge_1.tf` | terraform | 8 (4 HIGH, 4 CRITICAL) |
+| `data/static/codefixes/iacLeakedKeyChallenge_2.tf` | terraform | 8 (4 HIGH, 4 CRITICAL) |
+| `data/static/codefixes/iacLeakedKeyChallenge_3_correct.tf` | terraform | 8 (4 HIGH, 4 CRITICAL) |
+| `infrastructure/terraform/networking.tf` | terraform | 8 (4 HIGH, 4 CRITICAL) |
+| `terraform/networking.tf` | terraform | 8 (4 HIGH, 4 CRITICAL) |
+| `terraform/main.tf`, `infrastructure/terraform/main.tf`, dossiers `.tf` | terraform | **0** |
+| **Total** | | **42** (22 HIGH, 20 CRITICAL) |
+
+Règles rencontrées :
+
+| Règle | Sévérité | Constat |
+|---|---|---|
+| `DS-0002` | HIGH | aucun `USER` non-root dans `test/smoke/Dockerfile` |
+| `DS-0025` | HIGH | `apk add curl` sans `--no-cache` (cache conservé dans l'image) |
+| `AWS-0037` | HIGH | système de fichiers EFS non chiffré au repos |
+| `AWS-0052` | HIGH | le load balancer ne rejette pas les en-têtes invalides |
+| `AWS-0053` | HIGH | load balancer exposé publiquement |
+| `AWS-0054` | CRITICAL | écouteur HTTP sans HTTPS |
+| `AWS-0104` | CRITICAL | règles de sortie ouvertes vers `0.0.0.0/0` |
+| `AWS-0164` | HIGH | sous-réseau qui attribue une IP publique |
+
+**Lecture critique, à écrire telle quelle dans le rapport :** ces 42 alertes **ne concernent pas l'image livrée**.
+- Les cinq fichiers `.tf` en cause appartiennent à Juice Shop : trois sont des **fixtures pédagogiques**
+  (`data/static/codefixes/…`, volontairement vulnérables), deux décrivent une infrastructure AWS d'exemple
+  (`terraform/`, `infrastructure/terraform/`) que nous n'utilisons pas.
+- Le `Dockerfile` de l'application est **propre** au regard de `trivy config` — les deux seules alertes Dockerfile
+  sont dans un fichier de test de fumée.
+
+Autrement dit : le scan ne dit pas « notre image est mal configurée », il dit « le dépôt contient des exemples
+d'infrastructure non conformes ». C'est exactement le genre de nuance qu'un correcteur attend.
 
 ## Limites de ce scan
 
-- Le scan est **non authentifié** et ne porte que sur l'image : aucune logique métier, aucune route dynamique.
-- L'image est scannée **au repos** : les vulnérabilités d'exécution relèvent du workshop 4 (ZAP).
-- Les CVE `UNKNOWN` (1) n'ont pas de score attribué : elles sont comptées à part, pas rangées de force.
-- La base de vulnérabilités évolue : ces chiffres sont valables **au 2026-11-01**, à la version de Trivy 0.75.0.
+- Le scan est **non authentifié** et porte sur l'image : aucune logique métier, aucune route dynamique.
+- L'image est analysée **au repos** : les vulnérabilités d'exécution relèvent du workshop 4 (ZAP).
+- Les CVE `UNKNOWN` (1) n'ont pas de score attribué : comptées à part, pas rangées de force.
+- La base de vulnérabilités et les règles évoluent : ces chiffres valent **au 2026-11-01**, avec Trivy 0.75.0.
+- Un secret détecté dans une image publique de démonstration est un **choix de conception** de l'éditeur, pas une
+  erreur de notre pipeline — mais il illustre pourquoi un secret ne doit jamais être copié dans une image.
 
 ## Preuves produites
 
@@ -135,8 +184,18 @@ Cette partie est reprise et traitée par Hasna (durcissement du Dockerfile).
 | `03-rapport.json` | rapport complet, **non filtré** |
 | `03-rapport.sarif` | même contenu, format CI |
 | `03-sbom.cdx.json` | SBOM CycloneDX |
-| `04-secrets.txt` | journal du scan de secrets |
-| `05-misconfig-dockerfile.txt` | résultat de `trivy config` |
+| `04-secrets.txt` | rapport du scan de secrets (1 secret, HIGH) |
+| `05-misconfig-dockerfile.txt` | rapport de `trivy config` (42 alertes) |
 | `06-inventaire.tsv` | une ligne par CVE, extraite du JSON |
-| `06-compteurs.txt` | compteurs recalculés |
+| `06-compteurs.txt` | compteurs recalculés depuis le TSV |
 | `07-sha256.txt` | empreintes de toutes les preuves |
+
+## Ce que le volet transmet à Hasna
+
+| Élément | Où |
+|---|---|
+| les 43 alertes HIGH / CRITICAL à trier | `06-inventaire.tsv` |
+| les 3 sans version corrigée | filtre `$5=="" || $5=="-"` sur le TSV |
+| les 40 corrigeables, dont `jsonwebtoken` et `crypto-js` en tête | tableau ci-dessus |
+| l'identité exacte de l'image (digest) pour comparer avant / après | `01-digest-image.txt` |
+| l'état de configuration du dépôt, pour son durcissement | `05-misconfig-dockerfile.txt` |
