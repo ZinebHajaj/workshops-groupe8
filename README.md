@@ -11,19 +11,19 @@ Branche de remise : **`workshop5-Groupe8`**
 
 | Exigence du professeur | Où elle est traitée | État |
 |---|---|---|
-| Trivy sur une image Docker | [`trivy-scan/`](trivy-scan/) — `00` à `03` | ✅ livré |
+| Trivy sur une image Docker | [`trivy-scan/`](docs/workshop5/trivy-scan/) — `00` à `03` | ✅ livré |
 | Vulnérabilités (CVE) | [section 4](#4-résultats-du-scan-de-référence) · `03-rapport.json` | ✅ livré |
 | Mauvaises configurations | [section 8](#8-mauvaises-configurations--42-alertes-dont-0-dans-le-dockerfile) · `05-misconfig-dockerfile.txt` | ✅ livré |
 | Secrets | [section 7](#7-secrets--5-constats-3-high-2-medium) · `04-secrets.txt` | ✅ livré |
 | Focus HIGH / CRITICAL | [section 4](#4-résultats-du-scan-de-référence) · `06-inventaire.tsv` | ✅ livré |
 | Remédiation (image **et** Dockerfile durci) | branche `workshop5-trivy-remediation-hasna` | ⏳ **en cours — Hasna** |
 | CI/CD avec seuil de blocage par sévérité | branche `workshop5-trivy-pipeline-zineb` | ⏳ **en cours — Zineb** |
-| Branche dédiée, rapport, captures | cette branche · ce README · [`screenshots/`](screenshots/) | ✅ livré |
+| Branche dédiée, rapport, captures | cette branche · ce README · [`screenshots/`](docs/workshop5/screenshots/) | ✅ livré |
 
 > **À lire avant de juger le dossier :** le volet 1 (scan de référence) est terminé et documenté.
 > Les volets 2 et 3 sont en cours. **Aucun chiffre n'est annoncé pour ces deux volets** : leurs sections
 > indiquent ce qui est attendu et où le livrable arrivera. Tous les nombres présents ci-dessous viennent
-> des fichiers de [`trivy-scan/`](trivy-scan/), produits par les commandes de la
+> des fichiers de [`trivy-scan/`](docs/workshop5/trivy-scan/), produits par les commandes de la
 > [section 10](#10-reproduire-le-scan).
 
 ---
@@ -177,16 +177,53 @@ volet 2.
 
 ## 9. Captures d'écran
 
-Les six captures sont dans [`screenshots/`](screenshots/). Chacune répond à une question précise.
+Les six captures sont versionnées dans [`docs/workshop5/screenshots/`](docs/workshop5/screenshots/). Chacune
+répond à une question précise ; elles sont affichées ci-dessous et non liées, pour que la relecture se fasse
+sans quitter la page.
 
-| Capture | Ce qu'elle montre | Ce qu'elle prouve |
-|---|---|---|
-| [`01-identite`](docs/workshop5/screenshots/trivy-01-identite.png) | `trivy --version` + `docker images --digests` | Trivy 0.75.0, digest `42843723…5853f4` |
-| [`02-scan-execution`](docs/workshop5/screenshots/trivy-02-scan-execution.png) | début du journal de scan | Debian 13.7, `pkg_num=14`, scan mené à son terme |
-| [`03-vulns-tableau`](docs/workshop5/screenshots/trivy-03-vulns-tableau.png) | 20 lignes des 43 alertes | sévérité, CVE, paquet, installée, corrigée |
-| [`04-compteurs`](docs/workshop5/screenshots/trivy-04-compteurs.png) | `cat 06-compteurs.txt` | 60 / 32 / 11 / 11 / 1, puis 43 et 40 |
-| [`05-secret`](docs/workshop5/screenshots/trivy-05-secret.png) | liste des constats de secrets | 3 × `AsymmetricPrivateKey`, 2 × `JWT` |
-| [`06-misconfig`](docs/workshop5/screenshots/trivy-06-misconfig.png) | récapitulatif par fichier | `Dockerfile` à **0** face aux 42 alertes d'infra |
+### 1. L'outil et la cible — `trivy-01-identite.png`
+
+![Capture 01 : version de Trivy et digest de l'image](docs/workshop5/screenshots/trivy-01-identite.png)
+
+*Ce qu'elle prouve :* Trivy **0.75.0** pour l'outil, et pour la cible le digest
+`sha256:42843723a7bf…5853f4` — l'identité réelle de l'image, celle qui rend le scan reproductible.
+
+### 2. Le scan en cours d'exécution — `trivy-02-scan-execution.png`
+
+![Capture 02 : journal du scan, détection de l'OS et des paquets](docs/workshop5/screenshots/trivy-02-scan-execution.png)
+
+*Ce qu'elle prouve :* `Detected OS family="debian" version="13.7"`, `pkg_num=14` et un fichier de dépendances
+de langage — exactement les valeurs annoncées en section 3, et le fait que le scan est allé jusqu'au bout.
+
+### 3. Le tableau des alertes — `trivy-03-vulns-tableau.png`
+
+![Capture 03 : tableau des alertes HIGH et CRITICAL](docs/workshop5/screenshots/trivy-03-vulns-tableau.png)
+
+*Ce qu'elle prouve :* les 20 premières lignes des **43** alertes HIGH et CRITICAL, sur cinq colonnes —
+sévérité, identifiant, paquet, version installée, version corrigée. Les tirets en dernière colonne annoncent
+la section 6.
+
+### 4. Les compteurs — `trivy-04-compteurs.png`
+
+![Capture 04 : compteurs par sévérité, puis 43 et 40](docs/workshop5/screenshots/trivy-04-compteurs.png)
+
+*Ce qu'elle prouve :* `60 / 32 / 11 / 11 / 1`, puis **43** et **40** — les nombres recalculés depuis
+l'inventaire, et non recopiés d'un résumé.
+
+### 5. Les secrets — `trivy-05-secret.png`
+
+![Capture 05 : liste des cinq constats de secrets](docs/workshop5/screenshots/trivy-05-secret.png)
+
+*Ce qu'elle prouve :* les cinq fichiers concernés et leur règle — trois `HIGH: AsymmetricPrivateKey`, deux
+`MEDIUM: JWT`. Trivy masque les valeurs, il n'y a rien de confidentiel dans cette image.
+
+### 6. Les mauvaises configurations — `trivy-06-misconfig.png`
+
+![Capture 06 : mauvaises configurations par fichier](docs/workshop5/screenshots/trivy-06-misconfig.png)
+
+*Ce qu'elle prouve :* la colonne des compteurs, fichier par fichier — `Dockerfile` à **0**,
+`infrastructure/Dockerfile` à **0**, `test/smoke/Dockerfile` à **2**, cinq fichiers `.tf` à **8** : le total
+retombe sur 42, et les Dockerfiles de l'application sont propres.
 
 ---
 
