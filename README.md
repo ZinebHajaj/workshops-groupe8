@@ -321,7 +321,7 @@ d'avance.
 
 ---
 
-## 13. Volet 3 — CI/CD et seuil de blocage (Zineb) · 🔄 run rouge livré, run vert en attente
+## 13. Volet 3 — CI/CD et seuil de blocage (Zineb) · ✅ livré (run vert à produire après le volet 2)
 
 **Livré :**
 
@@ -332,7 +332,7 @@ d'avance.
 | Preuve du blocage | run #2 (rouge) | ✅ 8 constats CRITICAL, `exit code 1` |
 | Publication SARIF | onglet *Security* → *Code scanning* | ✅ alertes « Detected by Trivy » |
 | SBOM + rapport | artefact `trivy-report` | ✅ SARIF, table et SBOM CycloneDX |
-| Run vert après remédiation | — | ⏳ attend l'image remédiée du volet 2 |
+| Run vert après remédiation | `docs/workshop5/ci/passation-hasna.md` | ⏳ à produire après le volet 2 — procédure prête |
 
 **Le workflow** — un seul job (`timeout-minutes: 15`), déclenché sur `push`, `pull_request`, chaque jour à
 3 h UTC et à la demande. Trois scans de la même image : SARIF, table et SBOM en `exit-code: '0'` (ils
@@ -379,8 +379,7 @@ dépôt d'origine, puis corrigé. Le garde-fou s'est donc aussi appliqué à nou
 **Captures** (`docs/workshop5/ci/screenshots/`) : `trivy-ci-01` et `01b` (workflow et seuil),
 `trivy-ci-03` et `03b` (run rouge, total CRITICAL), `trivy-ci-04` (SARIF), `trivy-ci-05` (artefacts).
 
-**À compléter à la livraison de l'image remédiée :** numéro du run vert, image scannée, comparaison
-avant / après (`Total` CRITICAL, HIGH+CRITICAL), capture `trivy-ci-06`.
+**Passation vers le volet 2 (Hasna).** Le pipeline est terminé et n'attend plus que l'image remédiée. Le run vert et la comparaison avant / après ne seront ajoutés qu'une fois le volet 2 livré : aucune valeur n'est avancée d'avance. La marche à suivre (modifications du workflow, critères de réussite, tableau avant / après à remplir) est dans [`docs/workshop5/ci/passation-hasna.md`](docs/workshop5/ci/passation-hasna.md). Valeurs « avant » de référence : run #2, `Total: 8 (CRITICAL: 8)`, 7 CVE distinctes.
 
 Branche : `workshop5-trivy-pipeline-zineb`.
 
@@ -395,7 +394,7 @@ Branche : `workshop5-trivy-pipeline-zineb`.
 - Les secrets trouvés sont un **choix de conception** de Juice Shop (image publique de démonstration) ; ils
   illustrent la règle, ils ne l'infirment pas.
 - Les 42 alertes de configuration visent des fixtures et des exemples Terraform, pas l'image livrée.
-- **Volets 2 et 3 non livrés à ce jour** : voir sections 12 et 13.
+- **Volet 2 non livré à ce jour** (section 12). Le volet 3 est livré jusqu'au run rouge ; le run vert et la comparaison avant / après en dépendent (section 13).
 
 ---
 
