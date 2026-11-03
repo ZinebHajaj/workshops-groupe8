@@ -376,8 +376,43 @@ code malveillant (CVE-2026-33634), alors qu'un SHA ne peut pas l'être. Notre pr
 avant tout scan à cause d'un SHA mal recopié (`codeql-action`) ; il a été vérifié avec `git fetch` sur le
 dépôt d'origine, puis corrigé. Le garde-fou s'est donc aussi appliqué à nous-mêmes.
 
-**Captures** (`docs/workshop5/ci/screenshots/`) : `trivy-ci-01` et `01b` (workflow et seuil),
-`trivy-ci-03` et `03b` (run rouge, total CRITICAL), `trivy-ci-04` (SARIF), `trivy-ci-05` (artefacts).
+### Captures d'écran du volet 3
+
+Toutes les captures sont dans `docs/workshop5/ci/screenshots/`.
+
+#### 1. Le workflow — `trivy-ci-01-workflow-fichier.png`
+![Workflow Trivy : déclencheurs, permissions, actions épinglées par SHA](docs/workshop5/ci/screenshots/trivy-ci-01-workflow-fichier.png)
+
+Le fichier `.github/workflows/trivy-image.yml` sur la branche `workshop5-trivy-pipeline-zineb` : déclencheurs,
+permissions minimales, actions épinglées par SHA de commit avec le tag en commentaire.
+
+#### 2. Le seuil de blocage — `trivy-ci-01b-workflow-seuil.png`
+![Étape bloquante : severity CRITICAL et exit-code 1](docs/workshop5/ci/screenshots/trivy-ci-01b-workflow-seuil.png)
+
+La dernière étape : `severity: 'CRITICAL'` et `exit-code: '1'`. Ce sont ces deux lignes qui font échouer le job.
+
+#### 3. Le run rouge — `trivy-ci-03-run-rouge.png`
+![Fin du log : Error Process completed with exit code 1](docs/workshop5/ci/screenshots/trivy-ci-03-run-rouge.png)
+
+Fin du log de l'étape bloquante : `Error: Process completed with exit code 1`. Le pipeline refuse l'image.
+
+#### 4. Le total et le tableau des CVE — `trivy-ci-03b-total-critical.png`
+![Total: 8 (CRITICAL: 8) et tableau des CVE](docs/workshop5/ci/screenshots/trivy-ci-03b-total-critical.png)
+
+`Total: 8 (CRITICAL: 8)` et le détail : bibliothèque, CVE, version installée, version corrigée.
+
+#### 5. Le SARIF dans GitHub — `trivy-ci-04-sarif-code-scanning.png`
+![Security, Code scanning : alertes détectées par Trivy sur la branche du volet 3](docs/workshop5/ci/screenshots/trivy-ci-04-sarif-code-scanning.png)
+
+*Security → Code scanning*, filtre `branch:workshop5-trivy-pipeline-zineb tool:Trivy` : les alertes sont bien
+marquées « Detected by Trivy ».
+
+#### 6. Les artefacts — `trivy-ci-05-artefacts.png`
+![Artefact trivy-report du run](docs/workshop5/ci/screenshots/trivy-ci-05-artefacts.png)
+
+L'artefact `trivy-report` du run : rapport SARIF, rapport en table et SBOM CycloneDX.
+
+*La capture du run vert (`trivy-ci-06`) sera ajoutée ici après la remédiation (voir la passation ci-dessous).*
 
 **Passation vers le volet 2 (Hasna).** Le pipeline est terminé et n'attend plus que l'image remédiée. Le run vert et la comparaison avant / après ne seront ajoutés qu'une fois le volet 2 livré : aucune valeur n'est avancée d'avance. La marche à suivre (modifications du workflow, critères de réussite, tableau avant / après à remplir) est dans [`docs/workshop5/ci/passation-hasna.md`](docs/workshop5/ci/passation-hasna.md). Valeurs « avant » de référence : run #2, `Total: 8 (CRITICAL: 8)`, 7 CVE distinctes.
 
