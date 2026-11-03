@@ -27,7 +27,7 @@ Une alerte acceptée est listée ici avec sa raison et sa date : (aucune pour l'
 |---|---|---|
 | actions/checkout | v7.0.1 | `3d3c42e5aac5ba805825da76410c181273ba90b1` |
 | aquasecurity/trivy-action | v0.36.0 | `ed142fd0673e97e23eac54620cfb913e5ce36c25` |
-| github/codeql-action/upload-sarif | v4.39.2 | `1fc58d04d4d4374f921bdac573c3811c240f9c26` |
+| github/codeql-action/upload-sarif | v4.39.2 | `1fc58d04a4d4374f921bdac573c3811c240f9c26` |
 | actions/upload-artifact | v7.0.2 | `cf430e030ddbb5b0abf93d22962f4752f3646cd9` |
 
 Raison : en mars 2026, 76 des 77 tags de `trivy-action` ont été réécrits vers du code malveillant (CVE-2026-33634). Un SHA ne peut pas être réécrit. Sources : Aqua Security (« Trivy supply chain attack: what you need to know »), Socket (20 mars 2026), Endor Labs (CVE-2026-33634).
