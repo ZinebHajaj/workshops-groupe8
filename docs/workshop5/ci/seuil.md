@@ -16,7 +16,7 @@
 - **Évolution prévue** : passer à `HIGH,CRITICAL` dans l'étape bloquante une fois le stock ramené à zéro.
 
 ## Image scannée
-- Scan de référence (avant remédiation) : `bkimminich/juice-shop:latest`, digest `sha256:42843723a7bf…5853f4`.
+- Scan de référence (avant remédiation) : `bkimminich/juice-shop:latest`, digest `sha256:42843723a7bf4246aa5d63c324978b17ef296ac78434aeddd34c427bfb5853f4`.
 - Après remédiation : image construite depuis `Dockerfile.durci` (Hasna).
 
 ## Dérogations
