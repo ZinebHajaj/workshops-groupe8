@@ -519,19 +519,7 @@ foi pour la remise ; le run #1 reste la preuve historique du volet.
 | Durée | 1 min 53 s (job `zap-baseline` : 1 min 48 s) |
 | Artefacts | **2** — `zap-report` (34,4 Ko) et `zap_scan` (34,4 Ko) |
 
-### 8.4 Bonnes pratiques pour intégrer le DAST dans un pipeline CI/CD
 
-| Pratique | Pourquoi | Où en est ce projet |
-|---|---|---|
-| **Passif à chaque PR, actif planifié** (nuit, sur pré-prod) | le baseline coûte ~1 min ; le full scan coûte ~14 min et ne doit pas bloquer une revue | ✅ baseline en CI ; ❌ full scan encore manuel |
-| **Épingler les images par digest** (cible *et* scanner) | un tag peut changer de contenu et faire varier les résultats sans qu'une ligne de code ait bougé | ⚠️ scanner et cible épinglés par tag en CI ; digests relevés dans `docs/workshop4/zap-passif/` |
-| **Seuil de rupture explicite** | un rapport vert qui ne bloque rien ne protège rien | ⚠️ `fail_action: false` aujourd'hui ; passer à `true` avec un `rules.tsv` trié |
-| **Règles gérées en code** (`.zap/rules.tsv` versionné) | un faux positif écarté une fois ne doit pas revenir à chaque run | ✅ 3 règles (`10020`, `10021`, `10038`) en `WARN` |
-| **Archiver les rapports et suivre la tendance** | comparer deux runs vaut mieux que lire un rapport isolé | ✅ artefact `zap-report` ; ❌ pas encore de diff entre runs |
-| **Périmètre écrit et autorisation avant tout scan actif** | un scan actif attaque réellement la cible | ✅ `docs/workshop4/zap-actif/perimetre.txt`, exclusions `/logout` et `/socket.io/*` |
-| **Jamais la production** | ZAP actif peut dégrader un service ou corrompre des données | ✅ instances jetables uniquement |
-| **Scan authentifié** (context + utilisateur de test) | sans session, les zones privées restent invisibles | ❌ angle mort documenté en § 9 |
-| **Ne pas mélanger les familles de résultats** | DAST, SAST et SCA ne se comparent pas ligne à ligne | ✅ 16 / 19 alertes ZAP tenues séparées des 61 vulnérabilités Dependabot |
 
 
 
