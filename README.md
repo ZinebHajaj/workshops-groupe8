@@ -501,16 +501,7 @@ Les trois captures du run, dans `screenshots/workshop4/` à la racine du dépôt
 
 ![03 — la sortie de ZAP dans le journal du job](screenshots/workshop4/03-zap-log.png)
 
-**Le run de la branche de remise.** La fusion de la PR #55 (`7f33a69`) a déclenché un nouveau run **sur
-`Workshop4`** : même workflow, même cible, mais cette fois **sur le code réellement déposé**. C'est ce run qui fait
-foi pour la remise ; le run #1 reste la preuve historique du volet.
 
-| Élément | Valeur |
-|---|---|
-| Run | **#6** — commit `7f33a69` (merge PR #55) |
-| Branche | `Workshop4` (branche de remise) |
-| Déclencheur | `push` sur `Workshop4` — ce qui prouve que le déclencheur du YAML fonctionne |
-| Résultat | ⏳ à relever dans l'onglet *Actions* une fois le job terminé, puis à recopier ici |
 
 ### 8.4 Ce que la CI couvre — et ce qu'elle ne couvre pas encore
 
