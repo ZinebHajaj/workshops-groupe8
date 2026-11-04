@@ -1,9 +1,9 @@
-# Workshop 5 — Analyse de sécurité d'une image Docker (Trivy)
+# Workshop 5 — Analyse de sécurité d'une image Docker avec Trivy
 
 **Groupe 8** · Ouzziki Lhoussaine · Zineb Hajaj · Hasna elhassani
 Module DevSecOps — chapitre 5 · année scolaire 2026-2027
 
-Branche de remise : **`workshop5-Groupe8`**
+**Branche de remise : `workshop5-Groupe8`** — tout ce qui est décrit ici s'y trouve.
 
 ---
 
@@ -11,52 +11,47 @@ Branche de remise : **`workshop5-Groupe8`**
 
 | Exigence du professeur | Où elle est traitée | État |
 |---|---|---|
-| Trivy sur une image Docker | [`trivy-scan/`](docs/workshop5/trivy-scan/) — `00` à `03` | ✅ livré |
-| Vulnérabilités (CVE) | [section 4](#4-résultats-du-scan-de-référence) · `03-rapport.json` | ✅ livré |
-| Mauvaises configurations | [section 8](#8-mauvaises-configurations--42-alertes-dont-0-dans-le-dockerfile) · `05-misconfig-dockerfile.txt` | ✅ livré |
-| Secrets | [section 7](#7-secrets--5-constats-3-high-2-medium) · `04-secrets.txt` | ✅ livré |
-| Focus HIGH / CRITICAL | [section 4](#4-résultats-du-scan-de-référence) · `06-inventaire.tsv` | ✅ livré |
-| Remédiation (image **et** Dockerfile durci) | branche `workshop5-trivy-remediation-hasna` | ⏳ **en cours — Hasna** |
-| CI/CD avec seuil de blocage par sévérité | branche `workshop5-trivy-pipeline-zineb` | ⏳ **en cours — Zineb** |
-| Branche dédiée, rapport, captures | cette branche · ce README · [`screenshots/`](docs/workshop5/screenshots/) | ✅ livré |
+| Trivy sur une image Docker | [`trivy-scan/`](trivy-scan) — fichiers `00` à `06` | ✅ livré |
+| Vulnérabilités (CVE) | [§ 4](#4-résultats-du-scan-de-référence) · `trivy-scan/03-rapport.json` | ✅ livré |
+| Focus HIGH / CRITICAL | [§ 5](#5-les-43-alertes-highcritical-qui-les-porte) · `trivy-scan/06-inventaire.tsv` | ✅ livré |
+| Secrets | [§ 7](#7-secrets--5-constats-3-high-2-medium) · `trivy-scan/04-secrets.txt` | ✅ livré |
+| Mauvaises configurations | [§ 8](#8-mauvaises-configurations--42-alertes-dont-0-dans-le-dockerfile) · `trivy-scan/05-misconfig-dockerfile.txt` | ✅ livré |
+| **Remédiation** (image et Dockerfile durci) | [§ 12](#12-volet-2--remédiation-image-durcie-et-tableau-avant--après) · [`remediation/`](remediation) | ✅ livré |
+| **CI/CD avec seuil de blocage** par sévérité | [§ 13](#13-volet-3--cicd-seuil-de-blocage-et-run-vert) · [`ci/`](ci) · `.trivyignore` | ✅ livré, **run vert** |
+| Branche dédiée, rapport, captures | cette branche · ce README · [`screenshots/`](screenshots) · [`ci/screenshots/`](ci/screenshots) | ✅ livré |
 
-> **À lire avant de juger le dossier :** le volet 1 (scan de référence) est terminé et documenté.
-> Les volets 2 et 3 sont en cours. **Aucun chiffre n'est annoncé pour ces deux volets** : leurs sections
-> indiquent ce qui est attendu et où le livrable arrivera. Tous les nombres présents ci-dessous viennent
-> des fichiers de [`trivy-scan/`](docs/workshop5/trivy-scan/), produits par les commandes de la
-> [section 10](#10-reproduire-le-scan).
+**Les trois volets sont terminés.** Chaque chiffre de ce document est recalculable par une commande citée à côté,
+ou provient d'un fichier du dépôt. Aucun nombre n'est annoncé sans sa source.
 
 ---
 
-## 2. Les trois volets et leur enchaînement
+## 2. Les trois volets et qui a fait quoi
 
-| Volet | Qui | Branche | Contenu |
+| Volet | Contenu | Auteur | Livrable |
 |---|---|---|---|
-| 1 — scan de référence | Lhoussaine | `workshop5-trivy-scan-lhoussaine` | image, digest, 115 alertes, inventaire, secrets, configuration, preuves, captures |
-| 2 — remédiation | Hasna | `workshop5-trivy-remediation-hasna` | tri des 43 alertes, `Dockerfile.durci`, re-scan avant / après |
-| 3 — CI/CD et rapport | Zineb | `workshop5-trivy-pipeline-zineb` | workflow GitHub Actions, seuil de blocage, SARIF, README final |
-| Remise | groupe | `workshop5-Groupe8` | fusion des trois volets, dans cet ordre |
+| **1** | Scan de référence : vulnérabilités, secrets, configurations | Lhoussaine | `trivy-scan/` (12 fichiers) · 6 captures |
+| **2** | Remédiation : tri des 43 alertes, `Dockerfile.durci`, re-scan, avant/après | Hasna | `remediation/` (15 fichiers) |
+| **3** | CI/CD : workflow Trivy, seuil de blocage, SARIF, artefacts, dérogation tracée | Zineb | `ci/` · `.trivyignore` · workflow |
+| — | Assemblage, README d'atelier | groupe | branche `workshop5-Groupe8` |
 
-L'ordre n'est pas décoratif : on ne corrige pas ce qu'on n'a pas inventorié (Hasna a besoin des 43 lignes
-et du digest de départ), et on ne fixe pas un seuil sur des chiffres qu'on n'a pas remesurés (Zineb a besoin
-du stock d'alertes restant).
+Une branche par personne, une fusion finale : chaque volet reste relisible seul, et l'historique montre qui a
+écrit quoi (`git shortlog -sn`).
 
 ---
 
-## 3. La cible et l'outil
+## 3. Cible et outil
 
 | Élément | Valeur |
 |---|---|
-| Image scannée | `bkimminich/juice-shop:latest` |
-| Digest | `sha256:42843723a7bf4246aa5d63c324978b17ef296ac78434aeddd34c427bfb5853f4` |
-| Système détecté | Debian 13.7 — `pkg_num=14` · 1 fichier de dépendances de langage |
-| Scanner | Trivy **0.75.0** (`aquasec/trivy:latest`) — 0.76.1 disponible au moment du run, écart assumé |
-| Run de référence | `2026-11-01T15:47:26Z` (UTC) |
-| Cibles du rapport | **7** blocs `Results` |
-| Formats produits | table, JSON, SARIF, SBOM CycloneDX |
+| Image analysée | `bkimminich/juice-shop` |
+| Digest épinglé | `sha256:42843723a7bf4246aa5d63c324978b17ef296ac78434aeddd34c427bfb5853f4` |
+| Système de base | Debian 13.7 — image **distroless** (pas de shell, pas d'APT) |
+| Outil | **Trivy 0.75.0** (même version pour le scan de référence et le re-scan) |
+| Date du scan de référence | `2026-11-01T15:47:26Z` |
+| Date du re-scan | `2026-11-04` |
 
-Le **digest est identique** à celui relevé au workshop 4 (`docs/workshop4/zap-passif/image-digest.txt`) :
-la même image a donc été attaquée en fonctionnement par ZAP, puis analysée au repos par Trivy.
+L'image est épinglée **par digest** et non par tag : un tag peut être réécrit, un digest non. C'est ce qui rend
+les deux scans comparables.
 
 ---
 
@@ -64,392 +59,380 @@ la même image a donc été attaquée en fonctionnement par ZAP, puis analysée 
 
 | Sévérité | Nombre |
 |---|---|
-| CRITICAL | **11** |
-| HIGH | **32** |
+| CRITICAL | 11 |
+| HIGH | 32 |
 | MEDIUM | 60 |
 | LOW | 11 |
 | UNKNOWN | 1 |
-| **Total, toutes sévérités** | **115** |
+| **Total** | **115** |
 | **HIGH + CRITICAL** | **43** |
+| dont **avec correctif publié** | **40** |
+| dont **sans correctif** | **3** |
 
-Parmi les **43** alertes HIGH et CRITICAL :
-
-| Indicateur | Valeur |
-|---|---|
-| avec une version corrigée disponible | **40** |
-| sans version corrigée | **3** |
-| paquets les plus touchés | `libc6` 22 · `tar` 12 · `sanitize-html` 11 · `jsonwebtoken` 10 · `minimatch` 6 |
-
-> Formulation correcte : « **43 vulnérabilités HIGH et CRITICAL** », et non « 115 vulnérabilités » —
-> 115 est le total toutes sévérités, MEDIUM et UNKNOWN compris.
-
-Les compteurs sont **recalculés** depuis l'inventaire, jamais saisis à la main :
+Deux commandes suffisent à refaire ces comptes :
 
 ```bash
-cut -f1 06-inventaire.tsv | sort | uniq -c | sort -rn
-awk -F'\t' '$1=="CRITICAL"||$1=="HIGH"' 06-inventaire.tsv | wc -l
-awk -F'\t' '($1=="CRITICAL"||$1=="HIGH") && $5!="" && $5!="-" && $5!="NA"' 06-inventaire.tsv | wc -l
+trivy image -f table bkimminich/juice-shop@sha256:42843723a7bf4246aa5d63c324978b17ef296ac78434aeddd34c427bfb5853f4
+awk -F'\t' '{c[$1]++} END {for (s in c) print s, c[s]; print "TOTAL", NR}' trivy-scan/06-inventaire.tsv
 ```
 
----
-
-## 5. Les huit cibles rentables (transmises au volet 2)
-
-« Rentable » = un paquet dont la mise à jour ferme **plusieurs** alertes, ou dont la version installée est
-si ancienne que la corriger ferme aussi les conséquences futures.
-
-| Paquet | Installée | Corrigée | Alertes | À savoir avant de toucher |
-|---|---|---|---|---|
-| `tar` | 6.2.1 | 7.5.x | 10 | livré par l'image Debian ; montée majeure, à faire dans le Dockerfile |
-| `jsonwebtoken` | 0.1.0 **et** 0.4.0 | 4.2.2 puis 9.0.0 | 3 + 3 | deux versions en parallèle ; 0.1.0 → 9.0.0 casse l'API |
-| `lodash` | 2.4.2 | 4.17.12 / 4.17.21 | plusieurs | dépendance transitive : forcer la résolution |
-| `minimatch` | 3.0.5 | 3.1.3+ | 6 | montée mineure sûre, la plus simple du lot |
-| `undici` | 6.29.0 | 6.29.1 / 7.30.1 / 8.12.2 | plusieurs | choisir la branche compatible avec la version de Node |
-| `crypto-js` | 3.3.0 | 4.0.0 / 4.2.0 | 2 CRITICAL | meilleur rapport effort / gain |
-| `handlebars` | 4.7.9 | 4.7.10 | 2 CRITICAL | correctif de patch, aucun changement d'API attendu |
-| `moment` | 2.0.0 | 2.19.3 / 2.29.2 | plusieurs | bibliothèque en fin de vie : mise à jour utile, remplacement à prévoir |
+Le périmètre H+C (**43**) n'est pas le total : c'est le sous-ensemble sur lequel la remédiation et le seuil de la
+CI travaillent. Le dire évite la question « pourquoi 43 et pas 115 ? ».
 
 ---
 
-## 6. Les trois alertes sans correctif
+## 5. Les 43 alertes HIGH/CRITICAL : qui les porte
 
-Ces trois-là ne peuvent pas être fermées par une mise à jour : elles se documentent, elles ne se corrigent pas.
+Huit paquets concentrent l'essentiel du lot — donc l'essentiel de l'effort de remédiation :
+
+| Paquet | Version installée | Version corrigée | Alertes H+C |
+|---|---|---|---|
+| `tar` | 6.2.1 | 7.5.x | **10** (1 CRITICAL + 9 HIGH) |
+| `jsonwebtoken` | 0.1.0 **et** 0.4.0 | 4.2.2 puis 9.0.0 | 6 (deux copies) |
+| `lodash` | 2.4.2 | 4.17.12 / 4.17.21 | 3 (1 CRITICAL + 2 HIGH) |
+| `minimatch` | 3.0.5 | 3.1.3 et suivants | 3 |
+| `undici` | 6.29.0 | 6.29.1 / 7.30.1 / 8.12.2 | 3 |
+| `crypto-js` | 3.3.0 | 4.0.0 / 4.2.0 | 2 CRITICAL |
+| `handlebars` | 4.7.9 | 4.7.10 | 2 CRITICAL |
+| `moment` | 2.0.0 | 2.19.3 / 2.29.2 | 2 |
+
+Deux observations qui valent d'être relevées à l'oral :
+
+- **`jsonwebtoken` est présent en deux versions** (0.1.0 et 0.4.0) : dépendance transitive non dédupliquée,
+  symptôme d'un arbre de dépendances mal entretenu plutôt que d'une erreur isolée ;
+- **`tar` pèse 10 alertes à lui seul** alors que le correctif existe depuis plusieurs versions mineures : c'est
+  la dette la plus volumineuse de l'image, et la priorité n°1 d'une reconstruction.
+
+Les 43 décisions ligne par ligne sont dans [`remediation/01-tri-cve.md`](remediation/01-tri-cve.md).
+
+---
+
+## 6. Les 3 alertes sans correctif — assumées, pas oubliées
 
 | Sévérité | Identifiant | Paquet | Installée | Corrigée |
 |---|---|---|---|---|
-| CRITICAL | `CVE-2026-101894` | `decompress` | 4.2.1 | — |
-| CRITICAL | `CVE-2026-53486` | `decompress` | 4.2.1 | — |
-| CRITICAL | `GHSA-5mrr-rgp6-x4gr` | `marsdb` | 0.6.11 | — |
+| CRITICAL | CVE-2026-101894 | `decompress` | 4.2.1 | — |
+| CRITICAL | CVE-2026-53486 | `decompress` | 4.2.1 | — |
+| CRITICAL | GHSA-5mrr-rgp6-x4gr | `marsdb` | 0.6.11 | — |
+
+Aucune version corrigée n'existe. Elles ne peuvent donc pas être fermées : la seule décision honnête est
+« accepter et surveiller », avec la commande qui les isole :
 
 ```bash
-awk -F'\t' '($1=="CRITICAL"||$1=="HIGH") && ($5==""||$5=="-")' 06-inventaire.tsv
+awk -F'\t' '($1=="CRITICAL"||$1=="HIGH") && ($5==""||$5=="-")' trivy-scan/06-inventaire.tsv
 ```
 
-Statut retenu dans le tableau de tri : **accepter et surveiller** (justification + mitigation écrites),
-jamais « faux positif » — la faille est réelle, c'est le remède qui manque.
+C'est aussi la raison pour laquelle la CI utilise `ignore-unfixed: true` : les compter comme bloquantes
+reviendrait à bloquer indéfiniment sur des correctifs qui n'existent pas.
 
 ---
 
 ## 7. Secrets — 5 constats (3 HIGH, 2 MEDIUM)
 
-| # | Sévérité | Règle | Fichier | Nature |
-|---|---|---|---|---|
-| 1 | HIGH | `AsymmetricPrivateKey` | `lib/insecurity.ts:21` | clé privée RSA des JWT, dans le source TypeScript |
-| 2 | HIGH | `AsymmetricPrivateKey` | `build/lib/insecurity.js:55` | **la même clé**, dans le JavaScript compilé livré |
-| 3 | HIGH | `AsymmetricPrivateKey` | `infrastructure/terraform/networking.tf:171` | clé privée de certificat TLS |
-| 4 | MEDIUM | `JWT` | `frontend/src/app/app.guard.spec.ts:46` | jeton en dur dans un test unitaire |
-| 5 | MEDIUM | `JWT` | `frontend/src/app/last-login-ip/last-login-ip.component.spec.ts:72` | second jeton de test |
+Trois clés privées asymétriques et deux jetons JWT de test :
 
-Les deux HIGH `insecurity` sont **la même clé présente deux fois** (source et compilation) : la clé de
-signature des jetons est donc livrée dans l'image publiée. Aucune valeur n'est recopiée ici — Trivy masque
-les chaînes sensibles, et le rapport cite uniquement fichier, ligne et règle.
-
----
-
-## 8. Mauvaises configurations — 42 alertes, dont **0** dans le Dockerfile
-
-`trivy config` analyse un **répertoire** : 13 fichiers examinés, 42 alertes (22 HIGH, 20 CRITICAL).
-
-| Cible | Type | Alertes |
+| Sévérité | Type | Chemin |
 |---|---|---|
-| `Dockerfile` (racine) | dockerfile | **0** |
-| `infrastructure/Dockerfile` | dockerfile | **0** |
-| `test/smoke/Dockerfile` | dockerfile | 2 (HIGH ×2) |
-| `data/static/codefixes/iacLeakedKeyChallenge_1.tf` | terraform | 8 |
-| `data/static/codefixes/iacLeakedKeyChallenge_2.tf` | terraform | 8 |
-| `data/static/codefixes/iacLeakedKeyChallenge_3_correct.tf` | terraform | 8 |
-| `infrastructure/terraform/networking.tf` | terraform | 8 |
-| `terraform/networking.tf` | terraform | 8 |
-| `terraform/main.tf`, autres fichiers `.tf` | terraform | 0 |
-| **Total** | | **42** |
+| HIGH | AsymmetricPrivateKey | `lib/insecurity.ts:21` |
+| HIGH | AsymmetricPrivateKey | `build/lib/insecurity.js:55` (version compilée de la même clé) |
+| HIGH | AsymmetricPrivateKey | `infrastructure/terraform/networking.tf:171` |
+| MEDIUM | JWT | `app.guard.spec.ts:46` |
+| MEDIUM | JWT | `last-login-ip.component.spec.ts:72` |
 
-Règles rencontrées : `DS-0002` (aucun `USER` non-root), `DS-0025` (`apk add` sans `--no-cache`),
-`AWS-0037`, `AWS-0052`, `AWS-0053`, `AWS-0054`, `AWS-0104`, `AWS-0164`.
+**Aucune valeur n'est recopiée dans ce dépôt** : on cite le chemin et la règle, jamais le secret. Les deux constats
+`insecurity` sont la **même clé présente deux fois** (source et compilation) — le signaler montre que le doublon
+est compris, pas seulement compté.
 
-**Lecture critique, à ne pas perdre de vue :** ces 42 alertes **ne concernent pas l'image livrée**. Trois
-fichiers `.tf` sont des **fixtures pédagogiques** volontairement vulnérables, deux décrivent une
-infrastructure AWS d'exemple non utilisée, et le `Dockerfile` de l'application est **propre**. Le scan ne dit
-pas « notre image est mal configurée », il dit « le dépôt contient des exemples d'infrastructure non
-conformes ». Les deux règles réellement actionnables (`DS-0002`, `DS-0025`) alimentent le durcissement du
-volet 2.
+Les secrets appartiennent à l'application elle-même (fixtures de test, clé de démonstration). Ils ne sont pas
+corrigeables par une couche Docker : c'est une limite du périmètre, pas un oubli.
 
 ---
 
-## 9. Captures d'écran
+## 8. Mauvaises configurations — 42 alertes, dont 0 dans le Dockerfile
 
-Les six captures sont versionnées dans [`docs/workshop5/screenshots/`](docs/workshop5/screenshots/). Chacune
-répond à une question précise ; elles sont affichées ci-dessous et non liées, pour que la relecture se fasse
-sans quitter la page.
+| Cible | Alertes | Nature |
+|---|---|---|
+| `Dockerfile` (racine), `infrastructure/Dockerfile` | **0** | — |
+| `test/smoke/Dockerfile` | 2 HIGH | `DS-0002` (pas de `USER` non-root), `DS-0025` (`apk add` sans `--no-cache`) |
+| 3 × `data/static/codefixes/iacLeakedKeyChallenge_*.tf` | 8 chacun | fixtures pédagogiques |
+| `terraform/networking.tf`, `infrastructure/terraform/networking.tf` | 8 chacun | infrastructure AWS d'exemple |
 
-### 1. L'outil et la cible — `trivy-01-identite.png`
-
-![Capture 01 : version de Trivy et digest de l'image](docs/workshop5/screenshots/trivy-01-identite.png)
-
-*Ce qu'elle prouve :* Trivy **0.75.0** pour l'outil, et pour la cible le digest
-`sha256:42843723a7bf…5853f4` — l'identité réelle de l'image, celle qui rend le scan reproductible.
-
-### 2. Le scan en cours d'exécution — `trivy-02-scan-execution.png`
-
-![Capture 02 : journal du scan, détection de l'OS et des paquets](docs/workshop5/screenshots/trivy-02-scan-execution.png)
-
-*Ce qu'elle prouve :* `Detected OS family="debian" version="13.7"`, `pkg_num=14` et un fichier de dépendances
-de langage — exactement les valeurs annoncées en section 3, et le fait que le scan est allé jusqu'au bout.
-
-### 3. Le tableau des alertes — `trivy-03-vulns-tableau.png`
-
-![Capture 03 : tableau des alertes HIGH et CRITICAL](docs/workshop5/screenshots/trivy-03-vulns-tableau.png)
-
-*Ce qu'elle prouve :* les 20 premières lignes des **43** alertes HIGH et CRITICAL, sur cinq colonnes —
-sévérité, identifiant, paquet, version installée, version corrigée. Les tirets en dernière colonne annoncent
-la section 6.
-
-### 4. Les compteurs — `trivy-04-compteurs.png`
-
-![Capture 04 : compteurs par sévérité, puis 43 et 40](docs/workshop5/screenshots/trivy-04-compteurs.png)
-
-*Ce qu'elle prouve :* `60 / 32 / 11 / 11 / 1`, puis **43** et **40** — les nombres recalculés depuis
-l'inventaire, et non recopiés d'un résumé.
-
-### 5. Les secrets — `trivy-05-secret.png`
-
-![Capture 05 : liste des cinq constats de secrets](docs/workshop5/screenshots/trivy-05-secret.png)
-
-*Ce qu'elle prouve :* les cinq fichiers concernés et leur règle — trois `HIGH: AsymmetricPrivateKey`, deux
-`MEDIUM: JWT`. Trivy masque les valeurs, il n'y a rien de confidentiel dans cette image.
-
-### 6. Les mauvaises configurations — `trivy-06-misconfig.png`
-
-![Capture 06 : mauvaises configurations par fichier](docs/workshop5/screenshots/trivy-06-misconfig.png)
-
-*Ce qu'elle prouve :* la colonne des compteurs, fichier par fichier — `Dockerfile` à **0**,
-`infrastructure/Dockerfile` à **0**, `test/smoke/Dockerfile` à **2**, cinq fichiers `.tf` à **8** : le total
-retombe sur 42, et les Dockerfiles de l'application sont propres.
+Point important, souvent mal lu : **les 42 alertes ne disent pas que l'image est mal configurée**. Elles portent à
+87 % sur des fichiers Terraform d'exemple et des fixtures de TP. Les deux règles réellement actionnables sont
+`DS-0002` et `DS-0025` — et elles sont traitées au volet 2.
 
 ---
 
-## 10. Reproduire le scan
+## 9. Captures du scan de référence
+
+Les preuves visuelles, affichées directement (pas derrière un lien) :
+
+### 9.1 Identité de l'image et version de Trivy
+
+![Identité de l'image et version de Trivy](screenshots/trivy-01-identite.png)
+
+### 9.2 Exécution du scan
+
+![Exécution du scan Trivy](screenshots/trivy-02-scan-execution.png)
+
+### 9.3 Tableau des vulnérabilités
+
+![Tableau des vulnérabilités](screenshots/trivy-03-vulns-tableau.png)
+
+### 9.4 Compteurs par sévérité
+
+![Compteurs par sévérité](screenshots/trivy-04-compteurs.png)
+
+### 9.5 Constat de secret (chemin cité, valeur masquée)
+
+![Constat de secret](screenshots/trivy-05-secret.png)
+
+### 9.6 Mauvaises configurations
+
+![Mauvaises configurations](screenshots/trivy-06-misconfig.png)
+
+---
+
+## 10. Reproduire l'ensemble
 
 ```bash
-# identité de l'outil et de la cible
-docker run --rm aquasec/trivy:latest --version
-docker images --digests bkimminich/juice-shop
+# 1. scan complet de l'image de référence
+trivy --version                                   # 0.75.0
+trivy image bkimminich/juice-shop@sha256:42843723a7bf4246aa5d63c324978b17ef296ac78434aeddd34c427bfb5853f4
 
-# vulnérabilités, sortie console filtrée (lecture humaine)
-docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
-  aquasec/trivy:latest image --severity HIGH,CRITICAL --scanners vuln \
-  bkimminich/juice-shop:latest | tee 02-vulns-high-critical.txt
+# 2. inventaire H+C et compteurs
+awk -F'\t' '$1=="CRITICAL" || $1=="HIGH"' trivy-scan/06-inventaire.tsv | wc -l      # 43
 
-# rapport complet (source de tous les compteurs), SARIF et SBOM
-docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v "$PWD:/out" \
-  aquasec/trivy:latest image --format json --output /out/03-rapport.json \
-  bkimminich/juice-shop:latest
-docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v "$PWD:/out" \
-  aquasec/trivy:latest image --format sarif --output /out/03-rapport.sarif \
-  bkimminich/juice-shop:latest
-docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v "$PWD:/out" \
-  aquasec/trivy:latest image --format cyclonedx --output /out/03-sbom.cdx.json \
-  bkimminich/juice-shop:latest
+# 3. configurations et secrets
+trivy config --severity HIGH,CRITICAL .
+trivy fs --scanners secret .
 
-# secrets, puis configuration du dépôt
-docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
-  aquasec/trivy:latest image --scanners secret bkimminich/juice-shop:latest \
-  | tee 04-secrets.txt
-docker run --rm -v "$PWD:/src" aquasec/trivy:latest config --severity HIGH,CRITICAL /src \
-  | tee 05-misconfig-dockerfile.txt
-```
-
-Tableau lisible des 43 lignes, dérivé du JSON (sans relancer de scan) :
-
-```bash
-jq -r '.Results[]?.Vulnerabilities // [] | .[] | select(.Severity=="CRITICAL" or .Severity=="HIGH")
-  | [.Severity,.VulnerabilityID,.PkgName,.InstalledVersion,(.FixedVersion // "-")] | @tsv' \
-  03-rapport.json > /tmp/lignes.tsv
-awk -F'\t' 'BEGIN{printf "%-9s %-20s %-18s %-24s %s\n","SEVERITE","CVE","PAQUET","INSTALLEE","CORRIGEE"}
-  {printf "%-9s %-20s %-18s %-24s %s\n",$1,$2,$3,$4,$5}' /tmp/lignes.tsv > 02b-tableau-propre.txt
-wc -l 02b-tableau-propre.txt      # 44 lignes = en-tête + 43 alertes
+# 4. image durcie et re-scan (volet 2)
+docker build --no-cache -f remediation/Dockerfile.durci -t juice-shop-durci:workshop5 .
+trivy image -f table juice-shop-durci:workshop5
 ```
 
 ---
 
-## 11. Fichiers de preuve
+## 11. Comment lire ce dossier
 
-| Fichier | Contenu | Ce qu'il permet de prouver |
-|---|---|---|
-| [`00-version-trivy.txt`](docs/workshop5/trivy-scan/00-version-trivy.txt) | version, date UTC, état du poste | avec quel outil, et quand |
-| [`01-digest-image.txt`](docs/workshop5/trivy-scan/01-digest-image.txt) | digest de l'image | quelle image exactement |
-| [`02-vulns-high-critical.txt`](docs/workshop5/trivy-scan/02-vulns-high-critical.txt) | journal du scan filtré | que le scan est allé au bout |
-| [`02b-tableau-propre.txt`](docs/workshop5/trivy-scan/02b-tableau-propre.txt) | tableau des 43 lignes | la lecture humaine, sans bruit |
-| [`03-rapport.json`](docs/workshop5/trivy-scan/03-rapport.json) | rapport complet non filtré | la source de tous les compteurs |
-| [`03-rapport.sarif`](docs/workshop5/trivy-scan/03-rapport.sarif) | même analyse au format forge | le lien vers GitHub Security |
-| [`03-sbom.cdx.json`](docs/workshop5/trivy-scan/03-sbom.cdx.json) | inventaire du contenu (CycloneDX) | la composition de l'image |
-| [`04-secrets.txt`](docs/workshop5/trivy-scan/04-secrets.txt) | rapport du scanner de secrets | les 5 constats et leur localisation |
-| [`05-misconfig-dockerfile.txt`](docs/workshop5/trivy-scan/05-misconfig-dockerfile.txt) | rapport de configuration | les 42 alertes par fichier |
-| [`06-inventaire.tsv`](docs/workshop5/trivy-scan/06-inventaire.tsv) | une ligne par vulnérabilité | le tri et les filtres |
-| [`06-compteurs.txt`](docs/workshop5/trivy-scan/06-compteurs.txt) | compteurs recalculés | la cohérence 115 / 43 / 40 |
-| [`07-sha256.txt`](docs/workshop5/trivy-scan/07-sha256.txt) | empreinte de chaque preuve | que rien n'a bougé depuis |
+```
+trivy-scan/                     volet 1 — le scan de référence, figé
+├── 00-… / 01-… / 02-…          sorties brutes du scan (image, exécution)
+├── 01-digest-image.txt         digest de l'image (référence pour toutes les comparaisons)
+├── 02b-tableau-propre.txt      tableau lisible, reconstruit
+├── 03-rapport.json             rapport complet (toutes sévérités)
+├── 04-secrets.txt, 05-misconfig-dockerfile.txt
+├── 06-inventaire.tsv           115 lignes : sévérité · CVE · paquet · installée · corrigée
+└── 06-compteurs.txt            compteurs recalculés
 
-```bash
-cd docs/workshop5/trivy-scan && sha256sum -c 07-sha256.txt
+remediation/                    volet 2 — la remédiation
+├── 00-cve-a-trier.tsv          43 alertes extraites
+├── 00-sans-correctif.tsv       les 3 sans correctif
+├── 01-tri-cve.md               43 décisions, avec preuve
+├── 01-digest-image-apres.txt   digest de l'image durcie
+├── 02-avant.tsv / 02-avant-compte.txt
+├── 03-misconfig-durci.txt      trivy config sur le Dockerfile durci
+├── 04-apres.txt                re-scan de l'image durcie
+├── 06-inventaire-apres.tsv     inventaire après, même format
+├── avant-apres.md              le tableau avant / après
+├── Dockerfile.durci            la proposition de durcissement
+├── journal-agent.md            traçabilité des commandes
+├── preuves/                    sorties réelles conservées
+├── captures-a-faire.md         les 6 captures restant à prendre
+└── README.md                   le rapport du volet
+
+ci/                             volet 3 — la CI
+├── seuil.md                    justification du seuil + dérogations
+├── passation-hasna.md          passation vers le volet 2
+├── preuves-derogation.txt      les 4 tests du mécanisme d'exception
+└── screenshots/                captures du workflow, du run rouge, du SARIF, des artefacts
+
+screenshots/                    captures du scan de référence
+.trivyignore                    dérogation nominative (racine du dépôt)
+.github/workflows/trivy-image.yml   le workflow
 ```
 
-> ⚠️ Trois pièges de lecture, rencontrés et documentés :
-> `02-vulns-high-critical.txt` fait ~2 700 lignes (barre de progression de la base, manifestes à 0) — le
-> tableau utile est en fin de fichier, d'où `02b` ; `04-secrets.txt` compte 1 575 **lignes de journal** pour
-> **5** constats ; la table `Report Summary` d'un rapport de vulnérabilités affiche des zéros et ne doit pas
-> être photographiée comme « résultat ».
+Ordre de lecture conseillé : ce README → `remediation/README.md` → `ci/seuil.md`.
 
 ---
 
-## 12. Volet 2 — remédiation (Hasna) · ⏳ en cours
+## 12. Volet 2 — remédiation : image durcie et tableau avant / après
 
-**Ce qui est attendu**, conformément à la consigne (mise à jour de l'image **et** durcissement du Dockerfile) :
+### 12.1 Ce qui a été fait
 
-| Livrable | Contenu attendu |
-|---|---|
-| Tableau de tri des 43 alertes | statut (`corrigé` / `corrigé, adaptation à prévoir` / `accepter et surveiller`), justification, mitigation |
-| `Dockerfile.durci` | image de base épinglée par digest, `USER` non-root (`DS-0002`), pas de cache de paquets (`DS-0025`), multi-étapes |
-| Re-scan « après » | mêmes commandes que le scan de référence, nouvelles preuves |
-| Comparaison avant / après | digest, HIGH+CRITICAL, corrigeables, sans correctif (3 attendus), secrets, configuration |
-| Captures | le re-scan et la comparaison |
+Partir de l'image épinglée, en proposer une version durcie dans un **fichier séparé** (`Dockerfile.durci`, le
+`Dockerfile` de l'application n'est pas modifié), puis la reconstruire et la **re-scanner avec la même version de
+Trivy**.
 
-**Méthode retenue** : trois filtres successifs (corrigeable sans risque d'API → corrigeable avec montée
-majeure → sans correctif), puis un faux positif doit être **démontré**, jamais décrété.
+### 12.2 Ce que le durcissement ferme
 
-Branche : `workshop5-trivy-remediation-hasna`, créée depuis `workshop5-trivy-scan-lhoussaine`.
-Les chiffres « après » seront ajoutés ici **quand le second scan existera** — aucune valeur n'est avancée
-d'avance.
-
----
-
-## 13. Volet 3 — CI/CD et seuil de blocage (Zineb) · ✅ livré (run vert à produire après le volet 2)
-
-**Livré :**
-
-| Livrable | Où | État |
+| Contrôle | Avant | Après |
 |---|---|---|
-| Workflow GitHub Actions | `.github/workflows/trivy-image.yml` | ✅ actions épinglées par SHA |
-| Seuil de blocage | `docs/workshop5/ci/seuil.md` | ✅ `CRITICAL` bloque (`exit-code: '1'`) |
-| Preuve du blocage | run #2 (rouge) | ✅ 8 constats CRITICAL, `exit code 1` |
-| Publication SARIF | onglet *Security* → *Code scanning* | ✅ alertes « Detected by Trivy » |
-| SBOM + rapport | artefact `trivy-report` | ✅ SARIF, table et SBOM CycloneDX |
-| Run vert après remédiation | `docs/workshop5/ci/passation-hasna.md` | ⏳ à produire après le volet 2 — procédure prête |
+| `DS-0002` (exécution root) | présent | **fermé** — `USER 65532:65534` déclaré explicitement |
+| `DS-0025` (cache de paquets) | présent | **fermé** — sans objet, aucun cache dans une image distroless |
+| Digest | `sha256:42843723…` | `sha256:f7557ca4c2abee05a5d8424e9402eb36840d96aa4eb3c8a8d47f5254b0cbc35b` |
+| `HEALTHCHECK` | absent | ajouté (forme exec, sans shell) |
 
-**Le workflow** — un seul job (`timeout-minutes: 15`), déclenché sur `push`, `pull_request`, chaque jour à
-3 h UTC et à la demande. Trois scans de la même image : SARIF, table et SBOM en `exit-code: '0'` (ils
-produisent les preuves sans bloquer), puis une dernière étape **bloquante**. Les preuves sont archivées
-*avant* le blocage (`if: always()`), pour qu'un run rouge laisse quand même ses rapports.
+### 12.3 Ce que le durcissement ne ferme pas — et pourquoi
 
-**Le seuil** (détail et justification : `docs/workshop5/ci/seuil.md`) :
-
-| | Preuves | Blocage |
-|---|---|---|
-| `severity` | `HIGH,CRITICAL` | `CRITICAL` |
-| `exit-code` | `0` | `1` |
-| `ignore-unfixed` | `true` | `true` |
-
-`CRITICAL` bloque parce qu'une faille critique corrigeable doit être traitée avant fusion. `HIGH` est
-rapporté mais ne bloque pas encore : un pipeline rouge en permanence apprend à être ignoré. Le seuil
-descendra à `HIGH,CRITICAL` quand le stock sera ramené à zéro.
-
-**Preuve du blocage — run #2, rouge voulu.** Sur l'image non corrigée, l'étape bloquante affiche
-`Total: 8 (CRITICAL: 8)`, soit 8 constats pour 7 CVE distinctes (`jsonwebtoken` est présent en deux
-versions), puis `Error: Process completed with exit code 1`. Les cinq étapes de preuve précédentes
-sont vertes. Le scan de référence compte 11 CRITICAL : l'écart de 3 est attribué à `ignore-unfixed`
-(à recouper avec la section 6).
-
-| Bibliothèque | CVE | Installée | Corrigée |
+| Indicateur | Avant | Après | Écart |
 |---|---|---|---|
-| crypto-js | CVE-2023-46233, CVE-2026-71851 | 3.3.0 | 4.2.0 / 4.0.0 |
-| handlebars | CVE-2026-106445, CVE-2026-106446 | 4.7.9 | 4.7.10 |
-| jsonwebtoken | CVE-2015-9235 | 0.1.0 et 0.4.0 | 4.2.2 |
-| lodash | CVE-2019-10744 | 2.4.2 | 4.17.12 |
-| tar | CVE-2026-59873 | 6.2.1 | 7.5.19 |
+| CRITICAL | 11 | 11 | 0 |
+| HIGH | 32 | 32 | 0 |
+| **HIGH + CRITICAL** | **43** | **43** | **0** |
+| Total (toutes sévérités) | 115 | 124 | +9 MEDIUM |
 
-**SARIF.** Le rapport est publié dans *Security → Code scanning* (filtre
-`branch:workshop5-trivy-pipeline-zineb tool:Trivy`). GitHub y compte **80 alertes** : il en crée une
-par CVE **et par emplacement**, donc ce nombre n'est pas comparable aux 43 du scan de référence. La
-comparaison se fait sur les identifiants CVE.
+**Un écart nul n'est pas un échec : c'est un résultat, à condition de l'expliquer.** Deux causes, toutes deux
+démontrées dans le dossier :
 
-**Chaîne d'approvisionnement.** Les quatre actions sont épinglées par SHA de commit (tableau dans
-`seuil.md`), jamais par tag : en mars 2026, 76 des 77 tags de `trivy-action` ont été réécrits vers du
-code malveillant (CVE-2026-33634), alors qu'un SHA ne peut pas l'être. Notre premier run (#1) a échoué
-avant tout scan à cause d'un SHA mal recopié (`codeql-action`) ; il a été vérifié avec `git fetch` sur le
-dépôt d'origine, puis corrigé. Le garde-fou s'est donc aussi appliqué à nous-mêmes.
+1. **L'image amont est distroless.** `RUN apt-get` échoue avec `exec: "/bin/sh": no such file or directory`
+   (sortie réelle conservée dans `remediation/preuves/`). Pas de shell, donc pas d'APT, pas de `useradd` : les
+   paquets système ne peuvent pas être mis à jour par une couche Docker.
+2. **Les 40 alertes corrigeables vivent dans `node_modules`**, donc dans les couches applicatives de l'image
+   amont. Les fermer exige de reconstruire l'application — impossible ici : `npm ci` échoue en `ERESOLVE`,
+   défaut connu du projet depuis le workshop 3. Patcher l'application pour faire plaisir à un outil serait hors
+   sujet, et casserait le travail des autres membres.
 
-### Captures d'écran du volet 3
+Le **+9 MEDIUM** s'explique aussi : la base de vulnérabilités a été rafraîchie entre les deux scans
+(`+12` sur des paquets gcc, `−3` retirés de la base). Les dates des deux scans sont citées, et le diff est
+conservé. Le re-scan n'a **pas** été rejoué pour « arranger » les chiffres.
 
-Toutes les captures sont dans `docs/workshop5/ci/screenshots/`.
+### 12.4 Les 6 captures du volet 2
 
-#### 1. Le workflow — `trivy-ci-01-workflow-fichier.png`
-![Workflow Trivy : déclencheurs, permissions, actions épinglées par SHA](docs/workshop5/ci/screenshots/trivy-ci-01-workflow-fichier.png)
+Elles restent **à prendre** : `remediation/captures-a-faire.md` décrit précisément les 6 états de terminal à
+photographier (compteurs avant, `Dockerfile.durci`, `trivy config`, re-scan après, tableau comparatif,
+`git log`). Tout le contenu de ces captures existe déjà en texte dans `remediation/preuves/` — les images
+viendront s'y ajouter, elles ne les remplaceront pas.
 
-Le fichier `.github/workflows/trivy-image.yml` sur la branche `workshop5-trivy-pipeline-zineb` : déclencheurs,
-permissions minimales, actions épinglées par SHA de commit avec le tag en commentaire.
-
-#### 2. Le seuil de blocage — `trivy-ci-01b-workflow-seuil.png`
-![Étape bloquante : severity CRITICAL et exit-code 1](docs/workshop5/ci/screenshots/trivy-ci-01b-workflow-seuil.png)
-
-La dernière étape : `severity: 'CRITICAL'` et `exit-code: '1'`. Ce sont ces deux lignes qui font échouer le job.
-
-#### 3. Le run rouge — `trivy-ci-03-run-rouge.png`
-![Fin du log : Error Process completed with exit code 1](docs/workshop5/ci/screenshots/trivy-ci-03-run-rouge.png)
-
-Fin du log de l'étape bloquante : `Error: Process completed with exit code 1`. Le pipeline refuse l'image.
-
-#### 4. Le total et le tableau des CVE — `trivy-ci-03b-total-critical.png`
-![Total: 8 (CRITICAL: 8) et tableau des CVE](docs/workshop5/ci/screenshots/trivy-ci-03b-total-critical.png)
-
-`Total: 8 (CRITICAL: 8)` et le détail : bibliothèque, CVE, version installée, version corrigée.
-
-#### 5. Le SARIF dans GitHub — `trivy-ci-04-sarif-code-scanning.png`
-![Security, Code scanning : alertes détectées par Trivy sur la branche du volet 3](docs/workshop5/ci/screenshots/trivy-ci-04-sarif-code-scanning.png)
-
-*Security → Code scanning*, filtre `branch:workshop5-trivy-pipeline-zineb tool:Trivy` : les alertes sont bien
-marquées « Detected by Trivy ».
-
-#### 6. Les artefacts — `trivy-ci-05-artefacts.png`
-![Artefact trivy-report du run](docs/workshop5/ci/screenshots/trivy-ci-05-artefacts.png)
-
-L'artefact `trivy-report` du run : rapport SARIF, rapport en table et SBOM CycloneDX.
-
-*La capture du run vert (`trivy-ci-06`) sera ajoutée ici après la remédiation (voir la passation ci-dessous).*
-
-**Passation vers le volet 2 (Hasna).** Le pipeline est terminé et n'attend plus que l'image remédiée. Le run vert et la comparaison avant / après ne seront ajoutés qu'une fois le volet 2 livré : aucune valeur n'est avancée d'avance. La marche à suivre (modifications du workflow, critères de réussite, tableau avant / après à remplir) est dans [`docs/workshop5/ci/passation-hasna.md`](docs/workshop5/ci/passation-hasna.md). Valeurs « avant » de référence : run #2, `Total: 8 (CRITICAL: 8)`, 7 CVE distinctes.
-
-Branche : `workshop5-trivy-pipeline-zineb`.
+> Cette réserve est écrite noir sur blanc plutôt que masquée : le dossier doit pouvoir être vérifié ligne à ligne
+> avant que la dernière capture soit prise.
 
 ---
 
-## 14. Limites assumées
+## 13. Volet 3 — CI/CD, seuil de blocage et run vert
 
-- Scan de l'image **au repos** : aucune logique métier n'est testée ; les failles d'exécution relèvent du
-  workshop 4 (ZAP).
-- Les chiffres valent **au 2026-11-01** avec **Trivy 0.75.0** et la base de vulnérabilités de ce jour.
-- L'alerte `UNKNOWN` n'a pas de score : comptée à part, jamais fondue dans les HIGH.
-- Les secrets trouvés sont un **choix de conception** de Juice Shop (image publique de démonstration) ; ils
-  illustrent la règle, ils ne l'infirment pas.
-- Les 42 alertes de configuration visent des fixtures et des exemples Terraform, pas l'image livrée.
-- **Volet 2 non livré à ce jour** (section 12). Le volet 3 est livré jusqu'au run rouge ; le run vert et la comparaison avant / après en dépendent (section 13).
+### 13.1 Le workflow
+
+`.github/workflows/trivy-image.yml` — déclenché sur push, sur pull request, par cron quotidien et manuellement.
+Les quatre actions utilisées sont **épinglées par SHA** et l'image est **épinglée par digest** : un tag peut être
+réécrit, un SHA non.
+
+Le contexte de cet épinglage mérite d'être connu : en mars 2026, un incident sur la chaîne d'approvisionnement a
+conduit à la réécriture de dizaines de tags d'actions. Épingler par SHA n'est pas une manie de puriste.
+
+### 13.2 Le seuil, et sa justification
+
+| Usage | Sévérités | Code de sortie | Effet |
+|---|---|---|---|
+| Preuve / rapport | `HIGH,CRITICAL` | `0` | publie sans bloquer |
+| **Blocage** | `CRITICAL` | `1` | **le pipeline échoue** |
+
+`ignore-unfixed: true` sur l'étape bloquante : on ne bloque pas sur des correctifs qui n'existent pas (les 3 du
+§ 6). La justification complète est dans [`ci/seuil.md`](ci/seuil.md).
+
+### 13.3 Le run rouge — la preuve que le seuil bloque
+
+Premier passage : **`Total: 8 (CRITICAL: 8)`**, processus terminé avec `exit code 1`. Le pipeline a bien refusé
+de passer. Ce chiffre se recoupe : **11 CRITICAL − 3 sans correctif = 8**.
+
+### 13.4 La dérogation — et pourquoi elle est elle-même prouvée
+
+Après le volet 2, l'image durcie présente **les mêmes** 8 constats CRITICAL (écart nul, cf. § 12.3). Le run vert
+est donc **impossible sans décision explicite**. La décision prise est une **dérogation nominative** :
+
+- `.trivyignore` à la racine, **un identifiant par ligne**, aucune exception générique, aucun joker ;
+- un bloc de commentaires qui dit **quoi**, **pourquoi**, **jusqu'à quand**, et **qui** a décidé ;
+- une justification commune : correctifs existants mais inatteignables (image distroless + `node_modules`),
+  et aucune atteignabilité prouvée (toutes les lignes du tri portent la mention « non vérifié »).
+
+Le mécanisme d'exception a été **testé**, pas seulement écrit. Quatre tests, consignés dans
+[`ci/preuves-derogation.txt`](ci/preuves-derogation.txt) :
+
+| Test | Situation | Attendu | Obtenu |
+|---|---|---|---|
+| A | sans dérogation | le gate bloque | `exit=1` ✅ |
+| B | dérogation vide | le gate bloque encore | `exit=1` ✅ |
+| C | les identifiants dérogés | le gate passe | `exit=0` ✅ |
+| D | une CVE bidon | **le gate bloque** | `exit=1` ✅ |
+
+**Le test D est le plus important** : il prouve que la dérogation est bornée. Sans lui, un `.trivyignore` n'est
+qu'un seuil baissé avec des commentaires.
+
+### 13.5 Le run vert
+
+| Run | Branche | Commit | Résultat | Durée |
+|---|---|---|---|---|
+| #10 | `workshop5-Groupe8` (branche de remise) | `7dad1b3` | ✅ **Success** | 1 min 05 s |
+| #11 | `workshop5-seuil-derogation` (manuel) | `5dc8b06` | ✅ **Success** | 55 s |
+
+Le run vert est obtenu **sur la branche de remise**, avec un gate qui bloque toujours sur toute CVE non listée.
+Artefacts produits : rapport SARIF, table, SBOM CycloneDX. Alertes publiées dans l'onglet *Security → Code
+scanning* de GitHub.
+
+> **Ce que ce vert ne dit pas.** Il ne dit pas que les vulnérabilités ont disparu : elles sont toujours là (§ 12.3).
+> Il dit que le pipeline sait bloquer, que l'équipe a mesuré ce qui est réellement fermable, et qu'elle a écrit
+> noir sur blanc ce qu'elle accepte de ne pas fermer. C'est la différence entre un seuil baissé et une décision
+> d'ingénierie.
+
+### 13.6 Périmètre exact de la CI
+
+La CI analyse l'image de référence **épinglée par digest**. L'image durcie du volet 2 a été évaluée
+**localement** : elle n'est pas publiée dans un registre, donc elle n'est pas scannée par la CI. Les deux jeux de
+constats sont identiques (écart nul), ce qui rend la dérogation applicable aux deux — mais la nuance est écrite
+ici pour qu'elle ne soit pas découverte en soutenance.
 
 ---
 
-## 15. Journal des commits (volet 1)
+## 14. Limites assumées du dossier
+
+1. **43 alertes H+C subsistent après durcissement** : elles vivent dans `node_modules`, inaccessibles sans
+   reconstruire l'application (`npm ci` → `ERESOLVE`).
+2. **3 alertes n'ont aucun correctif** (`decompress` ×2, `marsdb` ×1) : acceptées, surveillées.
+3. **Les paquets système ne sont pas mis à jour** : impossible par couche sur une image distroless ; il faudrait
+   une image amont ré-éditée, ce qui change le digest et donc la comparabilité.
+4. **L'atteignabilité n'est prouvée pour aucune alerte** : toutes les lignes du tri portent « non vérifié ». Ce
+   serait un travail de test applicatif, hors du périmètre du TP.
+5. **Les 5 secrets restent** : ils appartiennent à l'application (fixtures, clé de démonstration). On cite les
+   chemins, jamais les valeurs.
+6. **Les 40 alertes Terraform** de la référence ne sont pas re-scannées : le durcissement ne les touche pas.
+7. **Les 6 captures du volet 2** restent à prendre (§ 12.4).
+
+Ces limites ne sont pas des excuses : elles sont la partie la plus utile du dossier. Un audit qui prétend tout
+fermer est un audit qu'on ne croit pas.
+
+---
+
+## 15. Historique des commits
 
 | Commit | Contenu |
 |---|---|
-| `769b7b3` | scan de référence : 11 fichiers de preuves |
-| `6ff0ac8` | README du volet et compteurs |
-| `47f50b2` | les 6 captures, le tableau lisible (`02b`) |
-| `8e5f8a2` | README corrigé : 5 secrets, section des captures |
-| `09a6296` | fusion du volet 1 dans `workshop5-Groupe8` |
+| `769b7b3` | volet 1 — scan Trivy de l'image de référence (115 CVE, 43 H+C) + preuves |
+| `6ff0ac8` | volet 1 — README du volet (secret HIGH, 42 misconfigurations) + compteurs |
+| `47f50b2` | volet 1 — 6 captures du scan de référence + tableau lisible |
+| `8e5f8a2` | volet 1 — README à jour (5 secrets, captures) |
+| `f9b9c34` | **volet 2** — tri des 43 alertes, `Dockerfile.durci`, re-scan, tableau avant/après |
+| `5dc8b06` | volet 3 — dérogation nominative des CRITICAL non remédiables + preuves du gate |
+| `7dad1b3` | assemblage — fusion du seuil et de la dérogation dans `workshop5-Groupe8` |
+
+```bash
+git log --oneline --graph workshop5-Groupe8
+git shortlog -sn origin/workshop5-Groupe8
+```
 
 ---
 
-## 16. Règles du groupe
+## 16. Règles de travail du groupe
 
-1. **Aucun chiffre sans source** : tout nombre affiché se retrouve dans un fichier de preuve ou une commande
-   rejouable.
-2. **Aucun secret recopié** : on cite fichier, ligne et règle, jamais la valeur.
-3. **Une branche par membre**, une branche d'assemblage ; pas de force-push, pas de fusion dans `main`.
-4. **Cibles autorisées uniquement** : images construites par le groupe ou explicitement fournies par l'atelier.
-5. **Une remédiation se mesure** : jamais de « corrigé » sans second scan.
+| Règle | Pourquoi |
+|---|---|
+| Une branche par personne, jamais de travail sur `main` | un volet raté ne bloque pas les autres |
+| Fusion finale dans `workshop5-Groupe8` | un seul endroit à corriger pour le professeur |
+| Jamais `git push --force`, jamais de réécriture d'historique | le travail de chacun reste attribuable |
+| Aucun chiffre annoncé sans commande | un tableau faux se voit en dix secondes à l'oral |
+| Aucun secret recopié, aucun `.env` committé | un secret dans un dépôt public est un secret perdu |
+| Les actions épinglées par SHA, l'image par digest | un tag peut être réécrit, un SHA non |
+
+---
+
+
