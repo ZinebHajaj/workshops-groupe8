@@ -19,8 +19,45 @@
 - Scan de référence (avant remédiation) : `bkimminich/juice-shop:latest`, digest `sha256:42843723a7bf4246aa5d63c324978b17ef296ac78434aeddd34c427bfb5853f4`.
 - Après remédiation : image construite depuis `Dockerfile.durci` (Hasna).
 
+La CI analyse l'image de référence épinglée par digest. L'image durcie du volet 2 (`juice-shop-durci:workshop5`) a été évaluée localement : elle n'est pas publiée dans un registre, donc elle n'est pas scannée par la CI. Les deux jeux de constats sont identiques (écart nul, cf. `remediation/avant-apres.md`), ce qui rend la dérogation applicable aux deux.
+
 ## Dérogations
-Une alerte acceptée est listée ici avec sa raison et sa date : (aucune pour l'instant).
+
+Date de décision : 2026-11-04  
+Auteur : Hasna Elhassani (volet 2) — revue : Zineb Hajaj (volet 3)  
+Date de réexamen : 2027-02-02 (90 jours)
+
+### Constats dérogés (image durcie juice-shop-durci:workshop5)
+
+| Identifiant | Paquet | Installée | Corrigée |
+|---|---|---|---|
+| CVE-2015-9235 | jsonwebtoken | 0.1.0 | 4.2.2 |
+| CVE-2015-9235 | jsonwebtoken | 0.4.0 | 4.2.2 |
+| CVE-2019-10744 | lodash | 2.4.2 | 4.17.12 |
+| CVE-2023-46233 | crypto-js | 3.3.0 | 4.2.0 |
+| CVE-2026-106445 | handlebars | 4.7.9 | 4.7.10 |
+| CVE-2026-106446 | handlebars | 4.7.9 | 4.7.10 |
+| CVE-2026-59873 | tar | 6.2.1 | 7.5.19 |
+| CVE-2026-71851 | crypto-js | 3.3.0 | 4.0.0 |
+
+### Justification
+
+- Les 8 constats CRITICAL sont tous portés par des paquets **npm dans `node_modules`**, donc dans les couches applicatives de l'image amont ;
+- l'image amont est **distroless** (pas de shell, pas d'APT, pas de `useradd`) — preuve : `docs/workshop5/remediation/preuves/essai-gabarit-apt-echec.txt` ;
+- les fermer exige de **reconstruire l'application**, impossible ici (`npm ci` échoue en `ERESOLVE`, défaut connu depuis le workshop 3) ;
+- aucun chemin d'exploitation n'a été prouvé : toutes les lignes du tri portent la mention « non vérifié » (`docs/workshop5/remediation/01-tri-cve.md`).
+
+### Portée exacte
+
+**constats CRITICAL de l'image `juice-shop-durci:workshop5`, rien d'autre.**
+
+- Ne couvre pas les HIGH, ni les secrets, ni la configuration ;
+- N'est pas reconductible tacitement : elle expire à la date de réexamen 2027-02-02 ;
+- Prouve que le gate bloque toujours sur toute CVE non listée (voir `preuves-derogation.txt`, test D).
+
+### Référence
+
+`docs/workshop5/remediation/preuves-derogation.txt` (tests A/B/C/D) · `docs/workshop5/remediation/README.md` §7
 
 ## Actions épinglées par SHA (tag en commentaire dans le workflow)
 | Action | Tag | Commit |

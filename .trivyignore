@@ -1,0 +1,32 @@
+# ============================================================================
+# Dérogations Trivy — Workshop 5, groupe 8
+# Portée   : constats CRITICAL bloquants de l'image durcie juice-shop-durci:workshop5
+# Décision : acceptation temporaire, tracée, avec date de réexamen
+# Auteur   : Hasna Elhassani (volet 2) — revue : Zineb Hajaj (volet 3)
+# Date     : 2026-11-04
+# Réexamen : 2027-02-02
+#
+# Justification commune à toutes les lignes ci-dessous :
+#   - les correctifs existent (d'où leur présence malgré ignore-unfixed) mais vivent
+#     dans node_modules, donc dans les couches applicatives de l'image amont ;
+#   - l'image amont est DISTROLESS : pas de shell, pas d'APT, pas de useradd
+#     (preuve : docs/workshop5/remediation/preuves/essai-gabarit-apt-echec.txt) ;
+#   - les fermer exige de reconstruire l'application, impossible ici (npm ci -> ERESOLVE,
+#     défaut connu depuis le workshop 3) ;
+#   - aucun chemin d'exploitation n'a été prouvé : toutes les lignes du tri portent
+#     la mention « non vérifié » (docs/workshop5/remediation/01-tri-cve.md).
+#
+# Ce que cette dérogation NE fait PAS :
+#   - elle ne désactive pas le gate : toute CVE CRITICAL non listée ici bloque encore ;
+#   - elle ne couvre pas les HIGH, ni les secrets, ni la configuration ;
+#   - elle n'est pas reconductible tacitement : elle expire à la date de réexamen.
+#
+# Références : docs/workshop5/remediation/README.md §7 · docs/workshop5/ci/seuil.md
+# ============================================================================
+CVE-2015-9235
+CVE-2019-10744
+CVE-2023-46233
+CVE-2026-106445
+CVE-2026-106446
+CVE-2026-59873
+CVE-2026-71851
