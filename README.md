@@ -16,7 +16,7 @@ Scanner : **OWASP ZAP 2.17.0**.
 | **Statut** | ✅ les trois volets sont livrés : scan passif, scan actif, intégration continue |
 | **Scan passif** (Lhoussaine) | 31/10/2026 18:22 — 116 URLs — 16 alertes (0 High, 2 Medium, 5 Low, 9 Info) — code de sortie `0` — intégré dans `Workshop4` (PR #40) |
 | **Scan actif** (Zineb) | 01/11/2026 01:22 → 01:36 UTC — 155 URLs — 19 alertes (0 High, 5 Medium, 5 Low, 9 Info) — intégré dans `Workshop4` (commit `7323e7a`) |
-| **Intégration continue** (Hasna) | workflow `DAST - ZAP Baseline` — **fusionné dans `Workshop4`** (PR #55 → merge `7f33a69`) — run #1 réussi sur la branche de travail, run **#6** déclenché sur la branche de remise |
+| **Intégration continue** (Hasna) | workflow `DAST - ZAP Baseline` — **fusionné dans `Workshop4`** (PR #55 → merge `7f33a69`) — run #1 réussi sur la branche de travail, **run #6 réussi (1 min 53 s) sur la branche de remise** |
 | **Preuves** | 29 captures + rapports + journaux dans `docs/workshop4/` |
 
 ## Sommaire
@@ -86,7 +86,7 @@ main ────┬────────────────────
 |---|---|---|---|---|
 | Ouzziki Lhoussaine | [`workshop4-zap-passif-lhoussaine`](https://github.com/ZinebHajaj/workshops-groupe8/tree/workshop4-zap-passif-lhoussaine) | `81372f8`, `2557d68`, `ae74dd0` | pull request **#40** → fusion `2792a49` | ✅ dans `Workshop4` |
 | Zineb Hajaj | [`workshop4-zap-actif-zineb`](https://github.com/ZinebHajaj/workshops-groupe8/tree/workshop4-zap-actif-zineb) | `0d1770d`, `7323e7a`, `6df4f5d` | fusion du commit `7323e7a` | ✅ dans `Workshop4` |
-| Hasna elhassani | [`workshop4-zap-pipeline-hasna`](https://github.com/ZinebHajaj/workshops-groupe8/tree/workshop4-zap-pipeline-hasna) | `d54fdde`, `eb2faa7` | pull request **#55** → fusion `7f33a69` | ✅ dans `Workshop4` — run #6 déclenché sur la branche de remise |
+| Hasna elhassani | [`workshop4-zap-pipeline-hasna`](https://github.com/ZinebHajaj/workshops-groupe8/tree/workshop4-zap-pipeline-hasna) | `d54fdde`, `eb2faa7` | pull request **#55** → fusion `7f33a69` | ✅ dans `Workshop4` — run #6 réussi (1 min 53 s) sur la branche de remise |
 
 **Les quatre règles que le groupe s'est données :**
 
@@ -347,7 +347,7 @@ Spider AJAX **non** activé, scan **non authentifié** — deux points qui expli
 | Résumé console | `FAIL-NEW 0`, `WARN-NEW 9`, `PASS 141` |
 | Alertes du rapport | **19** : 0 High, 5 Medium, 5 Low, 9 Informationnel |
 | Durée | ≈ 14 minutes |
-| Code de sortie | non relevé (à compléter dans une prochaine exécution) |
+| Code de sortie | non utilisé comme seuil : le scan a été lancé avec `-I`, qui neutralise l'échec sur les `WARN` |
 
 ![zap-actif-06 — fin du full scan](docs/workshop4/screenshots/zap-actif-06-fullscan-fin.png)
 
@@ -483,6 +483,10 @@ jobs:
 
 ### 8.3 Preuve d'exécution
 
+**Deux runs, deux rôles.** Le run du volet, exécuté sur la branche de travail de Hasna, prouve que le workflow
+fonctionne. Le run de la branche de remise prouve que le workflow **déposé** fonctionne. Les deux sont cités, aucun
+des deux n'est extrapolé.
+
 | Élément | Valeur |
 |---|---|
 | Workflow | `DAST - ZAP Baseline` |
@@ -501,12 +505,40 @@ Les trois captures du run, dans `screenshots/workshop4/` à la racine du dépôt
 
 ![03 — la sortie de ZAP dans le journal du job](screenshots/workshop4/03-zap-log.png)
 
+**Le run de la branche de remise.** La fusion de la PR #55 (`7f33a69`) a déclenché le run **#6** **sur
+`Workshop4`** : même workflow, même cible, mais cette fois **sur le code réellement déposé**. C'est ce run qui fait
+foi pour la remise ; le run #1 reste la preuve historique du volet.
+
+| Élément | Valeur |
+|---|---|
+| Run | **#6** — commit `7f33a69` (merge PR #55) |
+| Branche | `Workshop4` (branche de remise) |
+| Déclencheur | `push` sur `Workshop4` — ce qui prouve que le déclencheur du YAML fonctionne |
+| Date | 4 novembre 2026, 22 h 15 |
+| Résultat | ✅ **succès** |
+| Durée | 1 min 53 s (job `zap-baseline` : 1 min 48 s) |
+| Artefacts | **2** — `zap-report` (34,4 Ko) et `zap_scan` (34,4 Ko) |
+
+### 8.4 Bonnes pratiques pour intégrer le DAST dans un pipeline CI/CD
+
+| Pratique | Pourquoi | Où en est ce projet |
+|---|---|---|
+| **Passif à chaque PR, actif planifié** (nuit, sur pré-prod) | le baseline coûte ~1 min ; le full scan coûte ~14 min et ne doit pas bloquer une revue | ✅ baseline en CI ; ❌ full scan encore manuel |
+| **Épingler les images par digest** (cible *et* scanner) | un tag peut changer de contenu et faire varier les résultats sans qu'une ligne de code ait bougé | ⚠️ scanner et cible épinglés par tag en CI ; digests relevés dans `docs/workshop4/zap-passif/` |
+| **Seuil de rupture explicite** | un rapport vert qui ne bloque rien ne protège rien | ⚠️ `fail_action: false` aujourd'hui ; passer à `true` avec un `rules.tsv` trié |
+| **Règles gérées en code** (`.zap/rules.tsv` versionné) | un faux positif écarté une fois ne doit pas revenir à chaque run | ✅ 3 règles (`10020`, `10021`, `10038`) en `WARN` |
+| **Archiver les rapports et suivre la tendance** | comparer deux runs vaut mieux que lire un rapport isolé | ✅ artefact `zap-report` ; ❌ pas encore de diff entre runs |
+| **Périmètre écrit et autorisation avant tout scan actif** | un scan actif attaque réellement la cible | ✅ `docs/workshop4/zap-actif/perimetre.txt`, exclusions `/logout` et `/socket.io/*` |
+| **Jamais la production** | ZAP actif peut dégrader un service ou corrompre des données | ✅ instances jetables uniquement |
+| **Scan authentifié** (context + utilisateur de test) | sans session, les zones privées restent invisibles | ❌ angle mort documenté en § 9 |
+| **Ne pas mélanger les familles de résultats** | DAST, SAST et SCA ne se comparent pas ligne à ligne | ✅ 16 / 19 alertes ZAP tenues séparées des 61 vulnérabilités Dependabot |
 
 
-### 8.4 Ce que la CI couvre — et ce qu'elle ne couvre pas encore
+
+### 8.5 Ce que la CI couvre — et ce qu'elle ne couvre pas
 
 - **Couvert** : le baseline est rejoué automatiquement, les rapports sont archivés à chaque exécution, et la commande ne dépend plus d'une machine personnelle.
-- **À améliorer** (pistes, pas des défauts) : `fail_action: false` rend le job **non bloquant** — un FAIL ne fait pas échouer la PR ; l'image de la cible est épinglée par tag (`bkimminich/juice-shop`) et non par digest ; le `code de sortie` du scan n'est pas encore exploité comme seuil. Ces trois points sont documentés ici pour la suite du module, pas cachés.
+- **À améliorer** (pistes, pas des défauts) : `fail_action: false` rend le job **non bloquant** — un FAIL ne fait pas échouer la PR ; l'image de la cible est épinglée par tag (`bkimminich/juice-shop`) et non par digest ; le `code de sortie` du scan n'est pas exploité comme seuil. Ces trois points sont documentés ici pour la suite du module, pas cachés.
 
 > Le job de CI exécute un **baseline passif** : il ne remplace ni le scan actif de la section 7, ni le tri humain. Les **61 vulnérabilités Dependabot** de la branche principale relèvent du **SCA** : encore un autre tableau.
 
@@ -519,7 +551,7 @@ Les trois captures du run, dans `screenshots/workshop4/` à la racine du dépôt
 | Scan actif **non authentifié** | mêmes angles morts côté application connectée ; les règles actives ne voient que la surface publique |
 | Spider limité (1 min en passif, 2 min en actif) et **sans AJAX spider** | sur une SPA Angular, les routes dynamiques échappent au spider : c'est l'explication probable de la divergence XSS avec Semgrep |
 | Aucune logique métier | coupons, prix négatifs, usages multiples : invisibles pour un scanner |
-| Code de sortie du scan actif non relevé | le run actif n'est pas exploitable tel quel comme seuil de CI |
+| Code de sortie du scan actif neutralisé par `-I` | le run actif n'est pas exploitable tel quel comme seuil de CI ; seul le baseline l'est |
 | HTTP local, sans TLS | les attributs `Secure` et les redirections HTTPS ne sont pas évaluables ici |
 | 50 % de réponses lentes pendant l'actif | cible modeste : peut faire varier les résultats d'un run à l'autre |
 
