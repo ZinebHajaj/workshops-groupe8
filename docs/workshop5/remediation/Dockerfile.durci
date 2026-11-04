@@ -1,0 +1,24 @@
+# Image durcie — Workshop 5, volet 2 (remédiation)
+# On ne reconstruit PAS l'application : `npm ci` échoue en ERESOLVE (défaut connu du projet depuis le workshop 3).
+#
+# Écart documenté vs gabarit de mission : l'image épinglée est DISTROLESS.
+# Preuve réelle (T5) : `RUN apt-get` échoue — « exec: "/bin/sh": no such file or directory »
+# (fichier preuves/essai-gabarit-apt-echec.txt).
+# Il n'y a ni shell, ni apt-get, ni dpkg, ni utilisateur « node » dans /etc/passwd.
+# Conséquences assumées :
+#   - DS-0002 (non-root) : l'image amont tourne DÉJÀ en USER 65532 (non-root, cf. docker image inspect) ;
+#     on le re-déclare explicitement sous forme UID:GID pour qu'il ne dépende plus des métadonnées amont ;
+#   - DS-0025 (cache apt) : non applicable — aucun /var/lib/apt/lists/* ni /var/cache/apt/* dans une image
+#     distroless ; la règle DU « remove package caches » est intrinsèquement remplie plutôt que « nettoyée » ;
+#   - montée de version des paquets système : impossible par couche Docker (pas d'APT) ;
+#     le seul chemin est une image amont ré-éditée (hors périmètre de ce volet, épinglage conservé).
+FROM bkimminich/juice-shop@sha256:42843723a7bf4246aa5d63c324978b17ef296ac78434aeddd34c427bfb5853f4
+
+# Non-root explicite (DS-0002) — même identité que l'amont (65532), déclarée explicitement.
+USER 65532:65534
+
+# On ne redéfinit ni ENTRYPOINT ni CMD : ils sont hérités de l'image amont
+# (« /nodejs/bin/node » + « /juice-shop/build/app.js »).
+# HEALTHCHECK en forme exec : l'image distroless n'a pas de shell, mais /nodejs/bin/node existe.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \
+  CMD ["/nodejs/bin/node", "-e", "require('http').get('http://127.0.0.1:3000/rest/admin/application-version',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"]

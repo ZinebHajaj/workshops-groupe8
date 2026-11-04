@@ -1,0 +1,3 @@
+CRITICAL	CVE-2026-101894	decompress	4.2.1	-
+CRITICAL	CVE-2026-53486	decompress	4.2.1	-
+CRITICAL	GHSA-5mrr-rgp6-x4gr	marsdb	0.6.11	-
