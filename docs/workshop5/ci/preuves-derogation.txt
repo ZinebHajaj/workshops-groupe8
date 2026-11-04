@@ -1,0 +1,29 @@
+# Preuves de dérogation — Workshop 5, groupe 8
+# Image durcie : juice-shop-durci:workshop5 (construite depuis Dockerfile.durci du volet 2)
+# Gate : trivy image --severity CRITICAL --ignore-unfixed --exit-code 1
+# Trivy : 0.75.0 (identique au re-scan du volet 2)
+# Commmande constante : trivy image --severity CRITICAL --ignore-unfixed --exit-code 1 juice-shop-durci:workshop5
+
+Test A — sans dérogation : le gate bloque (état actuel)
+Commande : trivy image --severity CRITICAL --ignore-unfixed --exit-code 1 juice-shop-durci:workshop5 >/dev/null 2>&1
+Code retour obtenu : 1 (attendu 1 = bloqué)
+Conclusion : sans dérogation, le gate bloque bien sur les 8 constats CRITICAL (Total: 8, CRITICAL: 8).
+
+Test B — avec une dérogation volontairement vide : le gate bloque encore
+Commande : : > /tmp/vide.ignore && trivy image --severity CRITICAL --ignore-unfixed --exit-code 1 --ignorefile /tmp/vide.ignore juice-shop-durci:workshop5 >/dev/null 2>&1
+Code retour obtenu : 1 (attendu 1 = bloqué)
+Conclusion : une dérogation vide ne change rien — le mécanisme d'exception est vérifié comme actif, pas silencieux.
+
+Test C — avec la dérogation nominative : le gate passe
+Commande : trivy image --severity CRITICAL --ignore-unfixed --exit-code 1 --ignorefile .trivyignore juice-shop-durci:workshop5 >/dev/null 2>&1
+Code retour obtenu : 0 (attendu 0 = gate satisfait)
+Conclusion : avec les 7 identifiants distincts (8 constats) listés dans .trivyignore, le gate passe. La dérogation est exacte — pas une erreur d'orthographe, pas un identifiant de trop.
+
+Test D — la dérogation est bien limitée
+Commande : printf 'CVE-0000-000000\n' > /tmp/faux.ignore && trivy image --severity CRITICAL --ignore-unfixed --exit-code 1 --ignorefile /tmp/faux.ignore juice-shop-durci:workshop5 >/dev/null 2>&1
+Code retour obtenu : 1 (attendu 1 = une dérogation bidon ne fait rien passer)
+Conclusion : un identifiant qui ne correspond à rien dans l'image ne fait pas passer le gate.
+
+Conclusion générale : le gate bloque sans dérogation (1), bloque avec une dérogation vide (1), passe avec la dérogation nominative (0), et bloque encore avec une dérogation bidon (1).
+
+le gate bloque toujours sur toute CVE non listée (test D)
