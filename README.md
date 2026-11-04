@@ -1,7 +1,7 @@
 # Workshop 5 — Analyse de sécurité d'une image Docker avec Trivy
 
 **Groupe 8** · Ouzziki Lhoussaine · Zineb Hajaj · Hasna elhassani
-Module DevSecOps — chapitre 5
+Module DevSecOps — chapitre 5 
 
 **Branche de remise : `workshop5-Groupe8`** — tout ce qui est décrit ici s'y trouve.
 
@@ -25,7 +25,7 @@ Module DevSecOps — chapitre 5
 | Mauvaises configurations | [§ 8](#8-mauvaises-configurations--42-alertes-dont-0-dans-le-dockerfile) · `docs/workshop5/trivy-scan/05-misconfig-dockerfile.txt` | ✅ livré |
 | **Remédiation** (image et Dockerfile durci) | [§ 12](#12-volet-2--remédiation-image-durcie-et-tableau-avant--après) · [`docs/workshop5/remediation/`](docs/workshop5/remediation) | ✅ livré |
 | **CI/CD avec seuil de blocage** par sévérité | [§ 13](#13-volet-3--cicd-seuil-de-blocage-et-run-vert) · [`docs/workshop5/ci/`](docs/workshop5/ci) · `.trivyignore` | ✅ livré, **run vert** |
-| Branche dédiée, rapport, **captures** | cette branche · ce README · [§ 9](#9-captures-du-scan-de-référence) · [§ 13.6](#136-captures-du-volet-3) | ✅ 12 captures affichées |
+| Branche dédiée, rapport, **captures** | cette branche · ce README · [§ 9](#9-captures-du-scan-de-référence) · [§ 13.6](#136-captures-du-volet-3) | ✅ 13 affichées · 1 log de run vert à prendre |
 
 **Les trois volets sont terminés.** Chaque chiffre de ce document est recalculable par une commande citée à côté.
 Aucun nombre n'est annoncé sans sa source.
@@ -290,7 +290,7 @@ docs/workshop5/ci/                             volet 3 — la CI
 ├── seuil.md                    justification du seuil + section dérogations
 ├── passation-hasna.md          passation vers le volet 2
 ├── preuves-derogation.txt      les 4 tests du mécanisme d'exception
-└── screenshots/                6 captures (workflow, run rouge, SARIF, artefacts)
+└── screenshots/                6 du run rouge + 1 du run vert (+1 log à prendre)
 
 docs/workshop5/screenshots/                    6 captures du scan de référence
 .trivyignore                    dérogation nominative (racine du dépôt)
@@ -426,9 +426,42 @@ Artefacts : rapport SARIF, table, SBOM CycloneDX. Alertes publiées dans *Securi
 > Il dit que le pipeline sait bloquer, que l'équipe a mesuré ce qui est réellement fermable, et qu'elle a écrit ce
 > qu'elle accepte de ne pas fermer. C'est la différence entre un seuil baissé et une décision d'ingénierie.
 
+#### 13.5.1 Les captures du run vert
+
+**Le run vert lui-même** — page du run **#10**, déclenché par le push de `7dad1b3` sur `workshop5-Groupe8` :
+coche verte, `Success`, durée `1m 5s`, 1 artefact (`trivy-report`, 104 KB).
+
+![Run vert #10 — Success](docs/workshop5/ci/screenshots/trivy-ci-06-run-vert.png)
+
+**La capture complémentaire reste à prendre** : la fin du log du même run, montrant le `Total:` du scan **et** le
+fait que l'étape de blocage se termine sans échec. C'est elle qui explique *pourquoi* le run est vert — la page de
+résumé ci-dessus prouve l'exécution, pas la décision. Elle demande d'être **connecté à GitHub** (en anonyme, le log
+répond `Sign in to view logs`), donc elle ne peut pas être automatisée : elle se prend à la main, une fois.
+
+Deux règles de cadrage :
+
+- **cadrer l'URL et le couple branche/commit** — une coche verte sans contexte ne prouve rien ;
+- **ne pas recadrer pour cacher le `Total:`** — un vert obtenu par dérogation doit montrer le chiffre auquel il
+  déroge. Une capture qui masque le compteur transforme la dérogation en seuil simplement baissé, et tout le § 13.4
+  tombe avec elle.
+
+La ligne est prête, il suffira de la décommenter :
+
+<!--
+![Fin du log du run vert](docs/workshop5/ci/screenshots/trivy-ci-06b-run-vert-log.png)
+-->
+
+```bash
+# quand la capture du log existe
+git add docs/workshop5/ci/screenshots/trivy-ci-06b-run-vert-log.png README.md
+git commit -m "docs(workshop5): capture du log du run vert"
+git push origin HEAD:workshop5-Groupe8
+```
+
 ### 13.6 Captures du volet 3
 
-Les **6 captures du volet 3**, dans [`docs/workshop5/ci/screenshots/`](docs/workshop5/ci/screenshots).
+Les **6 captures du volet 3 déjà présentes**, dans [`docs/workshop5/ci/screenshots/`](docs/workshop5/ci/screenshots).
+Elles documentent le **run rouge** et ses effets. Le run vert a sa propre place, juste au-dessus (§ 13.5).
 
 #### 13.6.1 Le fichier de workflow
 
@@ -475,7 +508,8 @@ ici pour qu'elle ne soit pas découverte en soutenance.
 5. **Les 5 secrets restent** : ils appartiennent à l'application (fixtures, clé de démonstration). On cite les
    chemins, jamais les valeurs.
 6. **Les 40 alertes Terraform** de la référence ne sont pas re-scannées : le durcissement ne les touche pas.
-7. **Les 6 captures du volet 2** restent à prendre (§ 12.4). Les 12 autres sont affichées ci-dessus.
+7. **Les 6 captures du volet 2** (§ 12.4) et **la capture du log du run vert** (§ 13.5.1) restent à
+   prendre. Les 13 autres sont affichées ci-dessus.
 
 Ces limites ne sont pas des excuses : elles sont la partie la plus utile du dossier. Un audit qui prétend tout
 fermer est un audit qu'on ne croit pas.
@@ -498,11 +532,10 @@ fermer est un audit qu'on ne croit pas.
 | `5dc8b06` | `…-seuil-derogation` | volet 3 — dérogation nominative + preuves du gate |
 | `7dad1b3` | **fusion** | PR #53 → `workshop5-Groupe8` : seuil, dérogation et statuts |
 
-
-
+```bash
+git log --oneline --graph workshop5-Groupe8
+git shortlog -sn origin/workshop5-Groupe8
+```
 
 ---
 
-**En une phrase :** 115 constats, 43 dans le périmètre, 40 corrigeables mais inatteignables sans reconstruire
-l'application, 3 sans correctif — un pipeline qui bloque sur CRITICAL, une dérogation bornée et prouvée, et un
-run vert obtenu **sans avoir menti sur l'état réel de l'image**.
