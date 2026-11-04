@@ -1,9 +1,9 @@
 # Workshop 5 — Analyse de sécurité d'une image Docker avec Trivy
 
 **Groupe 8** · Ouzziki Lhoussaine · Zineb Hajaj · Hasna elhassani
-Module DevSecOps — chapitre 5 · année scolaire 2026-2027
+Module DevSecOps — 
 
-**Branche de remise : `workshop5-Groupe8`** — tout ce qui est décrit ici s'y trouve.
+**Branche de remise : `workshop5-Groupe8`** 
 
 ---
 
@@ -103,7 +103,7 @@ Deux observations qui valent d'être relevées à l'oral :
 - **`tar` pèse 10 alertes à lui seul** alors que le correctif existe depuis plusieurs versions mineures : c'est
   la dette la plus volumineuse de l'image, et la priorité n°1 d'une reconstruction.
 
-Les 43 décisions ligne par ligne sont dans [`remediation/01-tri-cve.md`](remediation/01-tri-cve.md).
+Les 43 décisions ligne par ligne sont dans [`remediation/01-tri-cve.md`](docs/workshop5/remediation/01-tri-cve.md).
 
 ---
 
@@ -169,27 +169,27 @@ Les preuves visuelles, affichées directement (pas derrière un lien) :
 
 ### 9.1 Identité de l'image et version de Trivy
 
-![Identité de l'image et version de Trivy](screenshots/trivy-01-identite.png)
+![Identité de l'image et version de Trivy](docs/workshop5/screenshots/trivy-01-identite.png)
 
 ### 9.2 Exécution du scan
 
-![Exécution du scan Trivy](screenshots/trivy-02-scan-execution.png)
+![Exécution du scan Trivy](docs/workshop5/screenshots/trivy-02-scan-execution.png)
 
 ### 9.3 Tableau des vulnérabilités
 
-![Tableau des vulnérabilités](screenshots/trivy-03-vulns-tableau.png)
+![Tableau des vulnérabilités](docs/workshop5/screenshots/trivy-03-vulns-tableau.png)
 
 ### 9.4 Compteurs par sévérité
 
-![Compteurs par sévérité](screenshots/trivy-04-compteurs.png)
+![Compteurs par sévérité](docs/workshop5/screenshots/trivy-04-compteurs.png)
 
 ### 9.5 Constat de secret (chemin cité, valeur masquée)
 
-![Constat de secret](screenshots/trivy-05-secret.png)
+![Constat de secret](docs/workshop5/screenshots/trivy-05-secret.png)
 
 ### 9.6 Mauvaises configurations
 
-![Mauvaises configurations](screenshots/trivy-06-misconfig.png)
+![Mauvaises configurations](docs/workshop5/screenshots/trivy-06-misconfig.png)
 
 ---
 
@@ -414,24 +414,6 @@ fermer est un audit qu'on ne croit pas.
 | `f9b9c34` | **volet 2** — tri des 43 alertes, `Dockerfile.durci`, re-scan, tableau avant/après |
 | `5dc8b06` | volet 3 — dérogation nominative des CRITICAL non remédiables + preuves du gate |
 | `7dad1b3` | assemblage — fusion du seuil et de la dérogation dans `workshop5-Groupe8` |
-
-```bash
-git log --oneline --graph workshop5-Groupe8
-git shortlog -sn origin/workshop5-Groupe8
-```
-
----
-
-## 16. Règles de travail du groupe
-
-| Règle | Pourquoi |
-|---|---|
-| Une branche par personne, jamais de travail sur `main` | un volet raté ne bloque pas les autres |
-| Fusion finale dans `workshop5-Groupe8` | un seul endroit à corriger pour le professeur |
-| Jamais `git push --force`, jamais de réécriture d'historique | le travail de chacun reste attribuable |
-| Aucun chiffre annoncé sans commande | un tableau faux se voit en dix secondes à l'oral |
-| Aucun secret recopié, aucun `.env` committé | un secret dans un dépôt public est un secret perdu |
-| Les actions épinglées par SHA, l'image par digest | un tag peut être réécrit, un SHA non |
 
 ---
 
