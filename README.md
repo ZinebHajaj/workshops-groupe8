@@ -16,7 +16,7 @@ Scanner : **OWASP ZAP 2.17.0**.
 | **Statut** | ✅ les trois volets sont livrés : scan passif, scan actif, intégration continue |
 | **Scan passif** (Lhoussaine) | 31/10/2026 18:22 — 116 URLs — 16 alertes (0 High, 2 Medium, 5 Low, 9 Info) — code de sortie `0` — intégré dans `Workshop4` (PR #40) |
 | **Scan actif** (Zineb) | 01/11/2026 01:22 → 01:36 UTC — 155 URLs — 19 alertes (0 High, 5 Medium, 5 Low, 9 Info) — intégré dans `Workshop4` (commit `7323e7a`) |
-| **Intégration continue** (Hasna) | workflow `DAST - ZAP Baseline` — run **#1 réussi** (1 min 37 s) — branche `workshop4-zap-pipeline-hasna` |
+| **Intégration continue** (Hasna) | workflow `DAST - ZAP Baseline` — **fusionné dans `Workshop4`** (PR #55 → merge `7f33a69`) — run #1 réussi sur la branche de travail, run **#6** déclenché sur la branche de remise |
 | **Preuves** | 29 captures + rapports + journaux dans `docs/workshop4/` |
 
 ## Sommaire
@@ -56,7 +56,7 @@ Objectifs :
 |---|---|---|---|---|
 | **Ouzziki Lhoussaine** | préparation de la cible, scan **passif** de référence, analyse et captures | [`workshop4-zap-passif-lhoussaine`](https://github.com/ZinebHajaj/workshops-groupe8/tree/workshop4-zap-passif-lhoussaine) (`81372f8`, `2557d68`, `ae74dd0`) | `docs/workshop4/zap-passif/` + 14 captures `zap-01…zap-12` | ✅ intégré dans `Workshop4` |
 | **Zineb Hajaj** | scan **actif** autorisé, alertes actives, rejeu manuel, corrélation SAST | [`workshop4-zap-actif-zineb`](https://github.com/ZinebHajaj/workshops-groupe8/tree/workshop4-zap-actif-zineb) (`0d1770d`, `7323e7a`, `6df4f5d`) | `docs/workshop4/zap-actif/` + 15 captures `zap-actif-01…12` | ✅ intégré dans `Workshop4` |
-| **Hasna elhassani** | workflow GitHub Actions, artefacts de CI, discussion DAST, remise | [`workshop4-zap-pipeline-hasna`](https://github.com/ZinebHajaj/workshops-groupe8/tree/workshop4-zap-pipeline-hasna) (`d54fdde`) | `.github/workflows/zap-baseline.yml`, `.zap/rules.tsv`, run #1 | ✅ livré, à fusionner dans `Workshop4` |
+| **Hasna elhassani** | workflow GitHub Actions, artefacts de CI, discussion DAST, remise | [`workshop4-zap-pipeline-hasna`](https://github.com/ZinebHajaj/workshops-groupe8/tree/workshop4-zap-pipeline-hasna) (`d54fdde`) | `.github/workflows/zap-baseline.yml`, `.zap/rules.tsv`, run #1 | ✅ fusionné dans `Workshop4` (PR #55 → `7f33a69`) |
 
 Principe de travail : une branche par personne, un périmètre par personne, aucun résultat repris d'un autre. Chaque affirmation de ce README se rattache à un fichier de `docs/workshop4/`, à un commit ou à un run de CI.
 
@@ -75,7 +75,9 @@ main ────┬────────────────────
          │                                                                 │  PR #40
          ├─ workshop4-zap-actif-zineb        0d1770d ─ 7323e7a ─ 6df4f5d ─┤  merge 2792a49
          │                                                                 │  7323e7a
-         └─ workshop4-zap-pipeline-hasna     d54fdde ─────────────────────┴─► Workshop4
+         └─ workshop4-zap-pipeline-hasna     d54fdde ─ eb2faa7 ───────────┴─► Workshop4
+                                                          │  PR #55            run #6
+                                                          └─ merge 7f33a69 ──────►
 ```
 
 **Les quatre branches, en un clic :** [`Workshop4`](https://github.com/ZinebHajaj/workshops-groupe8/tree/Workshop4) · [`workshop4-zap-passif-lhoussaine`](https://github.com/ZinebHajaj/workshops-groupe8/tree/workshop4-zap-passif-lhoussaine) · [`workshop4-zap-actif-zineb`](https://github.com/ZinebHajaj/workshops-groupe8/tree/workshop4-zap-actif-zineb) · [`workshop4-zap-pipeline-hasna`](https://github.com/ZinebHajaj/workshops-groupe8/tree/workshop4-zap-pipeline-hasna)
@@ -84,7 +86,7 @@ main ────┬────────────────────
 |---|---|---|---|---|
 | Ouzziki Lhoussaine | [`workshop4-zap-passif-lhoussaine`](https://github.com/ZinebHajaj/workshops-groupe8/tree/workshop4-zap-passif-lhoussaine) | `81372f8`, `2557d68`, `ae74dd0` | pull request **#40** → fusion `2792a49` | ✅ dans `Workshop4` |
 | Zineb Hajaj | [`workshop4-zap-actif-zineb`](https://github.com/ZinebHajaj/workshops-groupe8/tree/workshop4-zap-actif-zineb) | `0d1770d`, `7323e7a`, `6df4f5d` | fusion du commit `7323e7a` | ✅ dans `Workshop4` |
-| Hasna elhassani | [`workshop4-zap-pipeline-hasna`](https://github.com/ZinebHajaj/workshops-groupe8/tree/workshop4-zap-pipeline-hasna) | `d54fdde` | branche prête, fusion en attente | ⏳ reste à fusionner |
+| Hasna elhassani | [`workshop4-zap-pipeline-hasna`](https://github.com/ZinebHajaj/workshops-groupe8/tree/workshop4-zap-pipeline-hasna) | `d54fdde`, `eb2faa7` | pull request **#55** → fusion `7f33a69` | ✅ dans `Workshop4` — run #6 déclenché sur la branche de remise |
 
 **Les quatre règles que le groupe s'est données :**
 
@@ -245,6 +247,12 @@ Détail des alertes d'en-têtes dans le rapport HTML :
 ![zap-10c — détail COEP : paramètre évalué](docs/workshop4/screenshots/zap-10c-detail-coep.png)
 
 ![zap-11 — évidences extraites du rapport JSON](docs/workshop4/screenshots/zap-11-rapport-json.png)
+
+Synthèse et détail d'une alerte Medium, extraits du même rapport :
+
+![Synthèse des alertes du rapport ZAP](screenshots/workshop4/zap-summary-alerts.png)
+
+![Détail d'une alerte Medium dans le rapport ZAP](screenshots/workshop4/zap-medium-detail.png)
 
 ## 6. Analyser le scan passif
 
@@ -410,7 +418,8 @@ Les trois Medium propres à l'actif viennent de requêtes **construites** (noms 
 
 ### 8.1 Le workflow
 
-`.github/workflows/zap-baseline.yml` (branche `workshop4-zap-pipeline-hasna`, commit `d54fdde`) :
+`.github/workflows/zap-baseline.yml` — à la racine du dépôt, **branche `Workshop4`** ; introduit par le commit
+`d54fdde` (branche `workshop4-zap-pipeline-hasna`) et fusionné par la PR #55 (merge `7f33a69`) :
 
 ```yaml
 name: DAST - ZAP Baseline
@@ -483,6 +492,25 @@ jobs:
 | Résultat | **succès** |
 | Durée | 1 min 37 s |
 | Artefact | `zap-report` : `report_html.html`, `report_md.md`, `report_json.json` |
+
+Les trois captures du run, dans `screenshots/workshop4/` à la racine du dépôt :
+
+![01 — résumé du run : statut, branche, durée](screenshots/workshop4/01-run-summary.png)
+
+![02 — les étapes du job de CI](screenshots/workshop4/02-job-steps.png)
+
+![03 — la sortie de ZAP dans le journal du job](screenshots/workshop4/03-zap-log.png)
+
+**Le run de la branche de remise.** La fusion de la PR #55 (`7f33a69`) a déclenché un nouveau run **sur
+`Workshop4`** : même workflow, même cible, mais cette fois **sur le code réellement déposé**. C'est ce run qui fait
+foi pour la remise ; le run #1 reste la preuve historique du volet.
+
+| Élément | Valeur |
+|---|---|
+| Run | **#6** — commit `7f33a69` (merge PR #55) |
+| Branche | `Workshop4` (branche de remise) |
+| Déclencheur | `push` sur `Workshop4` — ce qui prouve que le déclencheur du YAML fonctionne |
+| Résultat | ⏳ à relever dans l'onglet *Actions* une fois le job terminé, puis à recopier ici |
 
 ### 8.4 Ce que la CI couvre — et ce qu'elle ne couvre pas encore
 
@@ -579,7 +607,8 @@ docs/workshop4/
     resultats.md                    alertes, verdicts, comparaison passif-actif
     zap-actif.html / .json / .md / .xml
     zap-actif.log.txt
-.github/workflows/zap-baseline.yml  CI (branche workshop4-zap-pipeline-hasna)
+.github/workflows/zap-baseline.yml  CI (branche Workshop4 depuis la PR #55)
+screenshots/workshop4/              5 captures de CI et de rapport (3 du run, 2 du rapport ZAP)
 .zap/rules.tsv                      politique d'alertes de la CI (idem)
 ```
 
@@ -656,4 +685,4 @@ docs/workshop4/
 | Passif | [`workshop4-zap-passif-lhoussaine`](https://github.com/ZinebHajaj/workshops-groupe8/tree/workshop4-zap-passif-lhoussaine) | `81372f8` (run et preuves, 25 fichiers), `2557d68` (capture du commit), `ae74dd0` (renommage capture CSP) |
 | Actif | [`workshop4-zap-actif-zineb`](https://github.com/ZinebHajaj/workshops-groupe8/tree/workshop4-zap-actif-zineb) | `0d1770d` (rapports, cadre, captures), `7323e7a` (alertes, rejeu manuel, corrélation), `6df4f5d` (capture git log) |
 | CI | [`workshop4-zap-pipeline-hasna`](https://github.com/ZinebHajaj/workshops-groupe8/tree/workshop4-zap-pipeline-hasna) | `d54fdde` (workflow `zap-baseline.yml` + `.zap/rules.tsv`) |
-| Intégration | [`Workshop4`](https://github.com/ZinebHajaj/workshops-groupe8/tree/Workshop4) | merge PR #40 (`2792a49`) pour le passif ; commit `7323e7a` pour l'actif ; la CI reste à fusionner |
+| Intégration | [`Workshop4`](https://github.com/ZinebHajaj/workshops-groupe8/tree/Workshop4) | merge PR #40 (`2792a49`) pour le passif ; commit `7323e7a` pour l'actif ; **merge PR #55 (`7f33a69`) pour la CI** |
