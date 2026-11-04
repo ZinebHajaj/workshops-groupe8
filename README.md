@@ -1,6 +1,6 @@
 # Workshop 5 — Analyse de sécurité d'une image Docker avec Trivy
 
-**Groupe 8** · Ouzziki Lhoussaine · Zineb Hajaj · Hasna elhassani
+**Groupe 8** · Ouzziki Lhoussaine · Zineb Hajaj · Hasna elhassani \
 Module DevSecOps — chapitre 5 
 
 **Branche de remise : `workshop5-Groupe8`** — tout ce qui est décrit ici s'y trouve.
