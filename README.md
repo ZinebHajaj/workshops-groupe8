@@ -516,26 +516,5 @@ fermer est un audit qu'on ne croit pas.
 
 ---
 
-## 15. Historique des commits et des fusions
 
-| Commit | Branche d'origine | Contenu |
-|---|---|---|
-| `769b7b3` | `…-scan-lhoussaine` | volet 1 — scan Trivy de l'image de référence (115 CVE, 43 H+C) + preuves |
-| `6ff0ac8` | `…-scan-lhoussaine` | volet 1 — README du volet + compteurs |
-| `47f50b2` | `…-scan-lhoussaine` | volet 1 — 6 captures du scan de référence + tableau lisible |
-| `8e5f8a2` | `…-scan-lhoussaine` | volet 1 — README à jour (5 secrets, captures) |
-| `2b3ba1c` | `…-pipeline-zineb` | volet 3 — image épinglée par digest dans le workflow |
-| `df21fc7` | `…-pipeline-zineb` | volet 3 — section 13 : volet CI/CD, run rouge et seuil |
-| `4150d75` | `…-pipeline-zineb` | volet 3 — passation vers le volet 2 et statut du volet 3 |
-| `6b62ed5` | `…-pipeline-zineb` | volet 3 — captures du run rouge, SARIF et artefacts |
-| `f9b9c34` | `…-remediation-hasna` | **volet 2** — tri des 43 alertes, `Dockerfile.durci`, re-scan, avant/après |
-| `5dc8b06` | `…-seuil-derogation` | volet 3 — dérogation nominative + preuves du gate |
-| `7dad1b3` | **fusion** | PR #53 → `workshop5-Groupe8` : seuil, dérogation et statuts |
-
-```bash
-git log --oneline --graph workshop5-Groupe8
-git shortlog -sn origin/workshop5-Groupe8
-```
-
----
 
