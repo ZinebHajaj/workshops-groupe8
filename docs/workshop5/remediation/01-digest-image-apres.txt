@@ -1,0 +1,2 @@
+sha256:075defee5bb4e624c534ef55811f2d1c4d2bc777fb6fae6d56f506141e76c059
+juice-shop-durci                     workshop5         sha256:075defee5bb4e624c534ef55811f2d1c4d2bc777fb6fae6d56f506141e76c059   075defee5bb4   3 weeks ago     531MB

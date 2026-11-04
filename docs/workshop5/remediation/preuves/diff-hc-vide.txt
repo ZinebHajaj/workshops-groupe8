@@ -1,0 +1,2 @@
+--- diff H+CRITICALES avant/apres (attendu: vide) ---
+--- plus de diff non nul ---
