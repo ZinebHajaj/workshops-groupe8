@@ -1,0 +1,3 @@
+--- compte des lignes du tri ---
+43
+--- cellules Decision vides (attendu : rien) ---

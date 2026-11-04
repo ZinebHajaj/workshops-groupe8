@@ -1,0 +1,7 @@
+     60 MEDIUM
+     32 HIGH
+     11 LOW
+     11 CRITICAL
+      1 UNKNOWN
+43
+40
