@@ -321,24 +321,102 @@ d'avance.
 
 ---
 
-## 13. Volet 3 — CI/CD et seuil de blocage (Zineb) · ⏳ en cours
+## 13. Volet 3 — CI/CD et seuil de blocage (Zineb) · ✅ livré (run vert à produire après le volet 2)
 
-**Ce qui est attendu :**
+**Livré :**
 
-| Livrable | Contenu attendu |
-|---|---|
-| Workflow GitHub Actions | `.github/workflows/…` avec `aquasecurity/trivy-action` **épinglée par SHA** (jamais `@v0.36.0`) |
-| Seuil de blocage | `severity` + `exit-code: '1'` — le job échoue au-delà du seuil, il ne se contente pas de signaler |
-| Preuve du blocage | un run **rouge volontaire** sur l'image non corrigée, puis un run vert après remédiation |
-| Publication SARIF | rapport visible dans l'onglet *Security* de GitHub |
-| README final | synthèse des trois volets, avec les chiffres après remédiation |
+| Livrable | Où | État |
+|---|---|---|
+| Workflow GitHub Actions | `.github/workflows/trivy-image.yml` | ✅ actions épinglées par SHA |
+| Seuil de blocage | `docs/workshop5/ci/seuil.md` | ✅ `CRITICAL` bloque (`exit-code: '1'`) |
+| Preuve du blocage | run #2 (rouge) | ✅ 8 constats CRITICAL, `exit code 1` |
+| Publication SARIF | onglet *Security* → *Code scanning* | ✅ alertes « Detected by Trivy » |
+| SBOM + rapport | artefact `trivy-report` | ✅ SARIF, table et SBOM CycloneDX |
+| Run vert après remédiation | `docs/workshop5/ci/passation-hasna.md` | ⏳ à produire après le volet 2 — procédure prête |
 
-**Choix de seuil, à argumenter** : commencer par `CRITICAL` (11 alertes sur le scan de référence), puis
-descendre à `HIGH,CRITICAL` une fois le stock ramené à zéro. Un pipeline rouge en permanence ne protège plus
-rien : les gens apprennent à ignorer le rouge.
+**Le workflow** — un seul job (`timeout-minutes: 15`), déclenché sur `push`, `pull_request`, chaque jour à
+3 h UTC et à la demande. Trois scans de la même image : SARIF, table et SBOM en `exit-code: '0'` (ils
+produisent les preuves sans bloquer), puis une dernière étape **bloquante**. Les preuves sont archivées
+*avant* le blocage (`if: always()`), pour qu'un run rouge laisse quand même ses rapports.
 
-Branche : `workshop5-trivy-pipeline-zineb`. Les numéros de run et les captures seront ajoutés quand le
-workflow existera.
+**Le seuil** (détail et justification : `docs/workshop5/ci/seuil.md`) :
+
+| | Preuves | Blocage |
+|---|---|---|
+| `severity` | `HIGH,CRITICAL` | `CRITICAL` |
+| `exit-code` | `0` | `1` |
+| `ignore-unfixed` | `true` | `true` |
+
+`CRITICAL` bloque parce qu'une faille critique corrigeable doit être traitée avant fusion. `HIGH` est
+rapporté mais ne bloque pas encore : un pipeline rouge en permanence apprend à être ignoré. Le seuil
+descendra à `HIGH,CRITICAL` quand le stock sera ramené à zéro.
+
+**Preuve du blocage — run #2, rouge voulu.** Sur l'image non corrigée, l'étape bloquante affiche
+`Total: 8 (CRITICAL: 8)`, soit 8 constats pour 7 CVE distinctes (`jsonwebtoken` est présent en deux
+versions), puis `Error: Process completed with exit code 1`. Les cinq étapes de preuve précédentes
+sont vertes. Le scan de référence compte 11 CRITICAL : l'écart de 3 est attribué à `ignore-unfixed`
+(à recouper avec la section 6).
+
+| Bibliothèque | CVE | Installée | Corrigée |
+|---|---|---|---|
+| crypto-js | CVE-2023-46233, CVE-2026-71851 | 3.3.0 | 4.2.0 / 4.0.0 |
+| handlebars | CVE-2026-106445, CVE-2026-106446 | 4.7.9 | 4.7.10 |
+| jsonwebtoken | CVE-2015-9235 | 0.1.0 et 0.4.0 | 4.2.2 |
+| lodash | CVE-2019-10744 | 2.4.2 | 4.17.12 |
+| tar | CVE-2026-59873 | 6.2.1 | 7.5.19 |
+
+**SARIF.** Le rapport est publié dans *Security → Code scanning* (filtre
+`branch:workshop5-trivy-pipeline-zineb tool:Trivy`). GitHub y compte **80 alertes** : il en crée une
+par CVE **et par emplacement**, donc ce nombre n'est pas comparable aux 43 du scan de référence. La
+comparaison se fait sur les identifiants CVE.
+
+**Chaîne d'approvisionnement.** Les quatre actions sont épinglées par SHA de commit (tableau dans
+`seuil.md`), jamais par tag : en mars 2026, 76 des 77 tags de `trivy-action` ont été réécrits vers du
+code malveillant (CVE-2026-33634), alors qu'un SHA ne peut pas l'être. Notre premier run (#1) a échoué
+avant tout scan à cause d'un SHA mal recopié (`codeql-action`) ; il a été vérifié avec `git fetch` sur le
+dépôt d'origine, puis corrigé. Le garde-fou s'est donc aussi appliqué à nous-mêmes.
+
+### Captures d'écran du volet 3
+
+Toutes les captures sont dans `docs/workshop5/ci/screenshots/`.
+
+#### 1. Le workflow — `trivy-ci-01-workflow-fichier.png`
+![Workflow Trivy : déclencheurs, permissions, actions épinglées par SHA](docs/workshop5/ci/screenshots/trivy-ci-01-workflow-fichier.png)
+
+Le fichier `.github/workflows/trivy-image.yml` sur la branche `workshop5-trivy-pipeline-zineb` : déclencheurs,
+permissions minimales, actions épinglées par SHA de commit avec le tag en commentaire.
+
+#### 2. Le seuil de blocage — `trivy-ci-01b-workflow-seuil.png`
+![Étape bloquante : severity CRITICAL et exit-code 1](docs/workshop5/ci/screenshots/trivy-ci-01b-workflow-seuil.png)
+
+La dernière étape : `severity: 'CRITICAL'` et `exit-code: '1'`. Ce sont ces deux lignes qui font échouer le job.
+
+#### 3. Le run rouge — `trivy-ci-03-run-rouge.png`
+![Fin du log : Error Process completed with exit code 1](docs/workshop5/ci/screenshots/trivy-ci-03-run-rouge.png)
+
+Fin du log de l'étape bloquante : `Error: Process completed with exit code 1`. Le pipeline refuse l'image.
+
+#### 4. Le total et le tableau des CVE — `trivy-ci-03b-total-critical.png`
+![Total: 8 (CRITICAL: 8) et tableau des CVE](docs/workshop5/ci/screenshots/trivy-ci-03b-total-critical.png)
+
+`Total: 8 (CRITICAL: 8)` et le détail : bibliothèque, CVE, version installée, version corrigée.
+
+#### 5. Le SARIF dans GitHub — `trivy-ci-04-sarif-code-scanning.png`
+![Security, Code scanning : alertes détectées par Trivy sur la branche du volet 3](docs/workshop5/ci/screenshots/trivy-ci-04-sarif-code-scanning.png)
+
+*Security → Code scanning*, filtre `branch:workshop5-trivy-pipeline-zineb tool:Trivy` : les alertes sont bien
+marquées « Detected by Trivy ».
+
+#### 6. Les artefacts — `trivy-ci-05-artefacts.png`
+![Artefact trivy-report du run](docs/workshop5/ci/screenshots/trivy-ci-05-artefacts.png)
+
+L'artefact `trivy-report` du run : rapport SARIF, rapport en table et SBOM CycloneDX.
+
+*La capture du run vert (`trivy-ci-06`) sera ajoutée ici après la remédiation (voir la passation ci-dessous).*
+
+**Passation vers le volet 2 (Hasna).** Le pipeline est terminé et n'attend plus que l'image remédiée. Le run vert et la comparaison avant / après ne seront ajoutés qu'une fois le volet 2 livré : aucune valeur n'est avancée d'avance. La marche à suivre (modifications du workflow, critères de réussite, tableau avant / après à remplir) est dans [`docs/workshop5/ci/passation-hasna.md`](docs/workshop5/ci/passation-hasna.md). Valeurs « avant » de référence : run #2, `Total: 8 (CRITICAL: 8)`, 7 CVE distinctes.
+
+Branche : `workshop5-trivy-pipeline-zineb`.
 
 ---
 
@@ -351,7 +429,7 @@ workflow existera.
 - Les secrets trouvés sont un **choix de conception** de Juice Shop (image publique de démonstration) ; ils
   illustrent la règle, ils ne l'infirment pas.
 - Les 42 alertes de configuration visent des fixtures et des exemples Terraform, pas l'image livrée.
-- **Volets 2 et 3 non livrés à ce jour** : voir sections 12 et 13.
+- **Volet 2 non livré à ce jour** (section 12). Le volet 3 est livré jusqu'au run rouge ; le run vert et la comparaison avant / après en dépendent (section 13).
 
 ---
 
