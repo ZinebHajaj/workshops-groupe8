@@ -1,8 +1,8 @@
 # Workshops DevSecOps — Groupe 8
 
-**Groupe 8** — Ouzziki Lhoussaine · Hasna elhassani · Zineb Hajaj \
+**Groupe 8** — Ouzziki Lhoussaine · Hasna elhassani · Zineb Hajaj   \
 **Dépôt :** https://github.com/ZinebHajaj/workshops-groupe8 \
-**Application analysée :** OWASP Juice Shop (Node.js / Angular / TypeScript)
+**Application analysée :** OWASP Juice Shop (Node.js / Angular / TypeScript) \
 **Module :** DevSecOps — ateliers 2 à 6
 
 Ce dépôt n'est pas une collection de travaux séparés. C'est **une seule chaîne de sécurité**, construite
@@ -17,14 +17,15 @@ on finit par surveiller la machine qui la fait tourner (atelier 6).
 ## Plan de ce document
 
 1. Comment lire ce dépôt — les branches et la méthode de travail
-2. Vue d'ensemble — les cinq ateliers en un tableau
-3. Atelier 2 — analyse statique du code (SAST)
-4. Atelier 3 — analyse des dépendances (SCA)
-5. Atelier 4 — tests dynamiques (DAST)
-6. Atelier 5 — sécurité de l'image Docker
-7. Atelier 6 — supervision, détection et réponse
-8. Ce que les cinq ateliers démontrent ensemble
-9. Repères techniques
+2. Les cinq README, en accès direct — un lien par atelier
+3. Vue d'ensemble — les cinq ateliers en un tableau
+4. Atelier 2 — analyse statique du code (SAST)
+5. Atelier 3 — analyse des dépendances (SCA)
+6. Atelier 4 — tests dynamiques (DAST)
+7. Atelier 5 — sécurité de l'image Docker
+8. Atelier 6 — supervision, détection et réponse
+9. Ce que les cinq ateliers démontrent ensemble
+10. Repères techniques
 
 ---
 
@@ -43,11 +44,11 @@ le rendu déposé sur Classroom. Elle n'est **jamais fusionnée dans `main`**.
 
 | Atelier | Branche de remise | Où sont les documents et les captures |
 |---|---|---|
-| 2 — SAST | `workshop2` | sur la branche : `README.md`, `docs/screenshots/`, `docs/RESULTATS-semgrep.md` |
-| 3 — SCA | `workshop3-dependency-check-lhoussaine`, `workshop3-pipeline-zineb` | `docs/workshop3/` (visible aussi sur `main`) |
-| 4 — DAST | `Workshop4` | sur la branche : `README.md`, `docs/workshop4/` (29 captures + rapports) |
-| 5 — Image | `workshop5-Groupe8` | sur la branche : `README.md`, `docs/workshop5/` (scan, remédiation, CI) |
-| 6 — Supervision | `workshop6-Groupe8` | sur la branche : `README.md`, `docs/workshop6/` (plateforme, captures) |
+| 2 — SAST | [`workshop2`](https://github.com/ZinebHajaj/workshops-groupe8/tree/workshop2) | sur la branche : `README.md`, `docs/screenshots/`, `docs/RESULTATS-semgrep.md` |
+| 3 — SCA | [`Workshop3`](https://github.com/ZinebHajaj/workshops-groupe8/tree/Workshop3) | sur la branche : `README.md`, `docs/workshop3/` (pipeline, scan, remédiation, captures) |
+| 4 — DAST | [`Workshop4`](https://github.com/ZinebHajaj/workshops-groupe8/tree/Workshop4) | sur la branche : `README.md`, `docs/workshop4/` (29 captures + rapports) |
+| 5 — Image | [`workshop5-Groupe8`](https://github.com/ZinebHajaj/workshops-groupe8/tree/workshop5-Groupe8) | sur la branche : `README.md`, `docs/workshop5/` (scan, remédiation, CI) |
+| 6 — Supervision | [`workshop6-Groupe8`](https://github.com/ZinebHajaj/workshops-groupe8/tree/workshop6-Groupe8) | sur la branche : `README.md`, `docs/workshop6/` (plateforme, captures) |
 
 ### La méthode de travail, identique aux cinq ateliers
 
@@ -81,7 +82,44 @@ limites et les cases vides. C'est précisément ce qu'on attend d'un audit.
 
 ---
 
-## 2. Vue d'ensemble
+## 2. Les cinq README, en accès direct
+
+Chaque atelier a son propre `README.md`, sur sa branche de remise. **Ils ne sont pas recopiés ici** :
+ce document les résume et renvoie à eux pour les détails, les commandes et les captures. Un clic suffit
+pour lire l'atelier dans son intégralité.
+
+| Atelier | Sujet du README | Lien direct vers le README | Toute la branche |
+|---|---|---|---|
+| **2** | SAST — SonarQube, Semgrep, Terraform, security gate | [workshop2/README.md](https://github.com/ZinebHajaj/workshops-groupe8/blob/workshop2/README.md) | [arborescence](https://github.com/ZinebHajaj/workshops-groupe8/tree/workshop2) |
+| **3** | SCA — OWASP Dependency-Check, Dependabot, gate CVSS ≥ 9 | [Workshop3/README.md](https://github.com/ZinebHajaj/workshops-groupe8/blob/Workshop3/README.md) | [arborescence](https://github.com/ZinebHajaj/workshops-groupe8/tree/Workshop3) |
+| **4** | DAST — OWASP ZAP passif, actif, pipeline | [Workshop4/README.md](https://github.com/ZinebHajaj/workshops-groupe8/blob/Workshop4/README.md) | [arborescence](https://github.com/ZinebHajaj/workshops-groupe8/tree/Workshop4) |
+| **5** | Image — Trivy, remédiation, seuil et dérogation | [workshop5-Groupe8/README.md](https://github.com/ZinebHajaj/workshops-groupe8/blob/workshop5-Groupe8/README.md) | [arborescence](https://github.com/ZinebHajaj/workshops-groupe8/tree/workshop5-Groupe8) |
+| **6** | Supervision — Wazuh, détection, réponse | [workshop6-Groupe8/README.md](https://github.com/ZinebHajaj/workshops-groupe8/blob/workshop6-Groupe8/README.md) | [arborescence](https://github.com/ZinebHajaj/workshops-groupe8/tree/workshop6-Groupe8) |
+| **`main`** | ce document — index de la chaîne | [README.md](https://github.com/ZinebHajaj/workshops-groupe8/blob/main/README.md) | [arborescence](https://github.com/ZinebHajaj/workshops-groupe8/tree/main) |
+
+### Ce que chaque README contient
+
+- **Atelier 2** — les rapports SonarQube et Semgrep, le tableau des faux positifs écartés, le détail des
+  8 `ERROR` restantes, le fonctionnement du gate et la démonstration du passage au rouge.
+- **Atelier 3** — le pipeline `build → dependency-check → security gate`, les trois états de rapport
+  (baseline locale à 46 findings, référence CI du 2026-10-31 à 13:27:17, run après corrections), les
+  codes de sortie (15 = gate bloqué, 13 = erreur d'outil) et la comparaison Dependabot /
+  Dependency-Check.
+- **Atelier 4** — les scans passif et actif, le périmètre écrit, les rapports HTML, les journaux et les
+  29 captures.
+- **Atelier 5** — le scan de référence, le tri des 43 HIGH+CRITICAL, la remédiation, le seuil de la CI,
+  la dérogation nominative et ses 4 tests de vérification.
+- **Atelier 6** — l'architecture de la plateforme, les versions et digests, la chronologie du
+  déploiement, les preuves, les 4 incidents et les 5 limites.
+
+> **Note de navigation.** Sur GitHub, un lien `blob/<branche>/chemin` ouvre le **fichier** ; un lien
+> `tree/<branche>` ouvre l'**arborescence** de la branche. Les branches d'atelier n'étant pas fusionnées
+> dans `main`, leurs fichiers ne sont visibles qu'en passant par ces liens ou par le sélecteur de
+> branche.
+
+---
+
+## 3. Vue d'ensemble
 
 | Atelier | La question posée | Outil | Cible | Résultat clé |
 |---|---|---|---|---|
@@ -96,7 +134,7 @@ corrigée, une alerte réellement qualifiée, un pipeline qui refuse réellement
 
 ---
 
-## 3. Atelier 2 — analyse statique du code (SAST)
+## 4. Atelier 2 — analyse statique du code (SAST)
 
 **Branche de remise :** `workshop2` · **Trois volets :** SonarQube (Zineb), Semgrep et Terraform
 (Hasna), pipeline et gate (Lhoussaine)
@@ -191,10 +229,11 @@ champ reste vert en toutes circonstances — et on croit avoir bloqué alors qu'
 
 ---
 
-## 4. Atelier 3 — analyse des dépendances (SCA)
+## 5. Atelier 3 — analyse des dépendances (SCA)
 
-**Preuves :** `docs/workshop3/` sur `main` · **Branches :** `workshop3-dependency-check-lhoussaine`,
-`workshop3-pipeline-zineb`
+**Branche de remise :** `Workshop3` · **Preuves :** `docs/workshop3/` · **Quatre branches de travail :**
+`workshop3-pipeline-zineb`, `workshop3-dependabot-hasna`, `workshop3-dependency-check-lhoussaine`,
+`workshop3-critical-remediation-lhoussaine`
 
 ### Le principe
 
@@ -245,7 +284,7 @@ d'écran.
 
 ---
 
-## 5. Atelier 4 — tests dynamiques (DAST)
+## 6. Atelier 4 — tests dynamiques (DAST)
 
 **Branche de remise :** `Workshop4`
 
@@ -282,7 +321,7 @@ commandes de rejeu.
 
 ---
 
-## 6. Atelier 5 — sécurité de l'image Docker
+## 7. Atelier 5 — sécurité de l'image Docker
 
 **Branche de remise :** `workshop5-Groupe8` · **Quatre branches :** scan (Lhoussaine), remédiation
 (Hasna), CI (Zineb), dérogation (`workshop5-seuil-derogation`, PR #53)
@@ -367,7 +406,7 @@ prouvée pour aucune alerte** : toutes les lignes du tri portent la mention « n
 
 ---
 
-## 7. Atelier 6 — supervision, détection et réponse
+## 8. Atelier 6 — supervision, détection et réponse
 
 **Branche de remise :** `workshop6-Groupe8`
 
@@ -422,7 +461,7 @@ Un déploiement qui se passe bien n'apprend rien. Ceux-ci sont documentés dans 
 
 ---
 
-## 8. Ce que les cinq ateliers démontrent ensemble
+## 9. Ce que les cinq ateliers démontrent ensemble
 
 | Notion du module | Où elle est démontrée | La preuve |
 |---|---|---|
@@ -436,7 +475,7 @@ Un déploiement qui se passe bien n'apprend rien. Ceux-ci sont documentés dans 
 
 ---
 
-## 9. Repères techniques
+## 10. Repères techniques
 
 | Élément | Valeur |
 |---|---|
@@ -444,7 +483,7 @@ Un déploiement qui se passe bien n'apprend rien. Ceux-ci sont documentés dans 
 | CI | GitHub Actions — `ubuntu-latest`, actions épinglées par SHA |
 | Outils | SonarQube Community, Semgrep, OWASP Dependency-Check, OWASP ZAP 2.17.0, Trivy 0.75.0, Wazuh 4.14.10 |
 | Conteneurisation | Docker, Docker Compose |
-| Branches de remise | `workshop2`, `workshop3-*`, `Workshop4`, `workshop5-Groupe8`, `workshop6-Groupe8` |
+| Branches de remise | `workshop2`, `Workshop3`, `Workshop4`, `workshop5-Groupe8`, `workshop6-Groupe8` |
 | Ce que contient `main` | ce document, `docs/workshop3/` (preuves SCA), `docs/synthese/` (le schéma) |
 
 > Les captures, journaux et rapports de chaque atelier vivent **sur sa branche de remise**, à côté de
