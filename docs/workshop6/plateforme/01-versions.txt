@@ -1,0 +1,52 @@
+# 01-versions.txt — versions figées du volet plateforme
+# Relevé le 2026-11-23 (UTC) sur ouzziki-HP-EliteBook
+# Règle : aucune valeur recopiée de mémoire ; tout ce qui suit a été lu à l'écran.
+
+## Hôte
+
+hostname            : ouzziki-HP-EliteBook
+adresse             : 192.168.0.126
+systeme             : Ubuntu 26.04.1 LTS
+noyau               : 7.0.0-43-generic
+architecture        : x86_64
+processeurs         : 8
+memoire totale      : 14 Gi (dont 5.6 Gi disponibles avant deploiement)
+disque libre sur /  : 64 G
+
+## Outils
+
+docker --version          : Docker version 29.10.0, build fdd4b8e
+docker compose version    : Docker Compose version v5.7.0
+
+## Depôt wazuh-docker
+
+chemin          : /home/ouzziki/wazuh-docker
+tag épinglé     : v4.14.10
+commit          : 76ddb88b — 2026-10-28 — "Merge pull request #2777 from wazuh/revert-image-tag-4.14.10-rc2"
+etat git        : detached HEAD (voulu : on travaille sur un tag, pas sur une branche)
+branche d'origine du clone : main (pointait alors sur 5.0.0-rc2 — voir incidents)
+
+## Images
+
+| Image | Digest |
+|---|---|
+| `wazuh/wazuh-manager:4.14.10` | `sha256:eabfa7ee4e63acb51c2130fa0583e30f843d030b091cf45a4fbd93d78fa21517` |
+| `wazuh/wazuh-indexer:4.14.10` | `sha256:1d2aeadb9de88c6d17ce12030606425deca5a210cdf5c87008843da38eb629ea` |
+| `wazuh/wazuh-dashboard:4.14.10` | `sha256:4d48be7210a291c00a2bd148cbd8bd61a25876e947b81790fd03f7d2aabda95a` |
+| `wazuh/wazuh-certs-generator:0.0.5` | *(utilisé une seule fois, non conservé)* |
+
+Digests relevés le 2026-11-23 :
+
+    for i in manager indexer dashboard; do docker image inspect wazuh/wazuh-$i:4.14.10 --format "{{index .RepoDigests 0}}"; done
+
+## Composants
+
+manager   : 4.14.10 — ports 1514, 1515, 514/udp, 55000
+indexer   : 4.14.10 — port 9200
+dashboard : 4.14.10 — port 443 (5601 en interne)
+agent     : wazuh-agent 4.14.10-1 (paquet .deb), hôte 192.168.0.126
+certificats : config/wazuh_indexer_ssl_certs/ (9 fichiers), générés le 2026-11-23 à 11:44
+
+## Noyau
+
+vm.max_map_count : 262144 (rendu permanent dans /etc/sysctl.d/99-wazuh.conf)
