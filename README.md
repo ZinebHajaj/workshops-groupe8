@@ -1,7 +1,7 @@
 # Workshops DevSecOps — Group 8
 
-**Groupe 8** — Ouzziki Lhoussaine · Hasna elhassani · Zineb Hajaj 
-**Dépôt :** https://github.com/ZinebHajaj/workshops-groupe8
+**Groupe 8** — Ouzziki Lhoussaine · Hasna elhassani · Zineb Hajaj \
+**Dépôt :** https://github.com/ZinebHajaj/workshops-groupe8 \
 
 ---
 
