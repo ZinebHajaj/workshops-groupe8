@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1040 400" width="1040" height="400" role="img" aria-label="Architecture de la plateforme Wazuh 4.14.10 déployée">
+  <rect x="0" y="0" width="1040" height="400" fill="#f8fafc"/>
+  <text x="30" y="46" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-size="21" font-weight="700" fill="#0f172a">Plateforme Wazuh 4.14.10 — architecture déployée</text>
+  <text x="30" y="68" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-size="13" fill="#64748b">Groupe 8 · un seul hôte, quatre composants, trois conteneurs Docker</text>
+
+  <!-- Carte 1 : cible -->
+  <rect x="30" y="110" width="210" height="120" rx="12" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+  <rect x="30" y="110" width="6" height="120" rx="3" fill="#2563eb"/>
+  <text x="50" y="138" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-size="15" font-weight="700" fill="#0f172a">Cible</text>
+  <text x="50" y="160" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-size="12" fill="#475569">cible-ssh-01 · 192.168.0.126</text>
+  <text x="50" y="181" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-size="12" fill="#475569">wazuh-agent 4.14.10</text>
+  <text x="50" y="202" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-size="12" fill="#475569">collecte sshd, PAM, sudo</text>
+
+  <!-- flèche 1 : agents -->
+  <line x1="242" y1="150" x2="286" y2="150" stroke="#64748b" stroke-width="2"/>
+  <polygon points="286,144 298,150 286,156" fill="#64748b"/>
+  <text x="244" y="140" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-size="11" font-weight="600" fill="#2563eb">1514</text>
+  <line x1="242" y1="192" x2="286" y2="192" stroke="#94a3b8" stroke-width="2" stroke-dasharray="4 3"/>
+  <polygon points="286,186 298,192 286,198" fill="#94a3b8"/>
+  <text x="244" y="182" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-size="11" font-weight="600" fill="#2563eb">1515</text>
+
+  <!-- Carte 2 : manager -->
+  <rect x="290" y="110" width="210" height="120" rx="12" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+  <rect x="290" y="110" width="6" height="120" rx="3" fill="#2563eb"/>
+  <text x="310" y="138" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-size="15" font-weight="700" fill="#0f172a">Manager</text>
+  <text x="310" y="160" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-size="12" fill="#475569">wazuh-manager 4.14.10</text>
+  <text x="310" y="181" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-size="12" fill="#475569">décode, applique les règles</text>
+  <text x="310" y="202" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-size="12" fill="#475569">produit les alertes</text>
+
+  <!-- flèche 2 : filebeat -->
+  <line x1="502" y1="170" x2="546" y2="170" stroke="#64748b" stroke-width="2"/>
+  <polygon points="546,164 558,170 546,176" fill="#64748b"/>
+  <text x="504" y="160" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-size="11" font-weight="600" fill="#2563eb">9200</text>
+
+  <!-- Carte 3 : indexer -->
+  <rect x="550" y="110" width="210" height="120" rx="12" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+  <rect x="550" y="110" width="6" height="120" rx="3" fill="#059669"/>
+  <text x="570" y="138" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-size="15" font-weight="700" fill="#0f172a">Indexer</text>
+  <text x="570" y="160" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-size="12" fill="#475569">wazuh-indexer 4.14.10</text>
+  <text x="570" y="181" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-size="12" fill="#475569">stocke alertes, inventaires</text>
+  <text x="570" y="202" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-size="12" fill="#475569">et vulnérabilités</text>
+
+  <!-- flèche 3 : requêtes du dashboard vers l'indexer -->
+  <line x1="808" y1="170" x2="764" y2="170" stroke="#64748b" stroke-width="2"/>
+  <polygon points="764,164 752,170 764,176" fill="#64748b"/>
+  <text x="770" y="160" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-size="11" font-weight="600" fill="#2563eb">9200</text>
+
+  <!-- Carte 4 : dashboard -->
+  <rect x="810" y="110" width="210" height="120" rx="12" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+  <rect x="810" y="110" width="6" height="120" rx="3" fill="#7c3aed"/>
+  <text x="830" y="138" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-size="15" font-weight="700" fill="#0f172a">Dashboard</text>
+  <text x="830" y="160" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-size="12" fill="#475569">wazuh-dashboard 4.14.10</text>
+  <text x="830" y="181" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-size="12" fill="#475569">interface web · port 443</text>
+  <text x="830" y="202" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-size="12" fill="#475569">analyse et recherche</text>
+
+  <!-- Notes -->
+  <rect x="30" y="270" width="310" height="86" rx="12" fill="#eff6ff" stroke="#bfdbfe" stroke-width="1.5"/>
+  <text x="50" y="296" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-size="12" font-weight="700" fill="#1e3a8a">Enrôlement</text>
+  <text x="50" y="316" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-size="12" fill="#334155">1515 une seule fois, puis les données</text>
+  <text x="50" y="334" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-size="12" fill="#334155">passent par 1514 en continu.</text>
+
+  <rect x="360" y="270" width="310" height="86" rx="12" fill="#fef2f2" stroke="#fecaca" stroke-width="1.5"/>
+  <text x="380" y="296" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-size="12" font-weight="700" fill="#991b1b">Prérequis noyau</text>
+  <text x="380" y="316" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-size="12" fill="#334155">vm.max_map_count = 262144</text>
+  <text x="380" y="334" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-size="12" fill="#334155">sinon l'indexer refuse de démarrer.</text>
+
+  <rect x="690" y="270" width="330" height="86" rx="12" fill="#f0fdf4" stroke="#bbf7d0" stroke-width="1.5"/>
+  <text x="710" y="296" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-size="12" font-weight="700" fill="#166534">Chiffrement</text>
+  <text x="710" y="316" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-size="12" fill="#334155">Certificats générés localement, auto-signés :</text>
+  <text x="710" y="334" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-size="12" fill="#334155">d'où l'avertissement du navigateur.</text>
+</svg>
